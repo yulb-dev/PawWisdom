@@ -1,0 +1,409 @@
+---
+description: Git 分支管理和提交规范
+alwaysApply: true
+---
+
+# Git 工作流和提交规范
+
+## 分支管理策略
+
+### 分支类型和命名
+
+**主要分支**
+
+- `main` - 生产环境分支，始终保持可部署状态
+- `develop` - 开发主分支，包含最新的开发功能
+
+**临时分支**
+
+- `feature/*` - 功能开发分支，从 develop 创建
+- `bugfix/*` - Bug 修复分支，从 develop 创建
+- `hotfix/*` - 紧急修复分支，从 main 创建
+- `release/*` - 发布准备分支，从 develop 创建
+
+### 分支命名规范
+
+```bash
+# ✅ GOOD - 清晰描述分支用途
+feature/pet-emotion-detection
+feature/user-authentication
+bugfix/fix-image-upload-crash
+hotfix/critical-api-error
+release/v1.0.0
+
+# ❌ BAD - 命名不清晰
+feature/new-stuff
+bugfix/fix
+my-branch
+```
+
+### 分支操作流程
+
+**功能开发流程**
+
+```bash
+# 1. 从 develop 创建功能分支
+git checkout develop
+git pull origin develop
+git checkout -b feature/pet-health-check
+
+# 2. 开发并提交
+git add .
+git commit -m "feat(health): add pet health check form"
+
+# 3. 推送到远程
+git push -u origin feature/pet-health-check
+
+# 4. 创建 Pull Request 到 develop
+# 5. Code Review 通过后合并
+# 6. 删除功能分支
+git branch -d feature/pet-health-check
+git push origin --delete feature/pet-health-check
+```
+
+**Hotfix 流程**
+
+```bash
+# 1. 从 main 创建 hotfix 分支
+git checkout main
+git pull origin main
+git checkout -b hotfix/fix-login-error
+
+# 2. 修复并提交
+git commit -m "fix(auth): resolve login token validation error"
+
+# 3. 合并到 main 和 develop
+git checkout main
+git merge --no-ff hotfix/fix-login-error
+git push origin main
+
+git checkout develop
+git merge --no-ff hotfix/fix-login-error
+git push origin develop
+
+# 4. 删除 hotfix 分支
+git branch -d hotfix/fix-login-error
+```
+
+## Commit Message 规范
+
+### Conventional Commits 格式
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Type 类型（必填）
+
+| Type       | 说明                         | 示例                                             |
+| ---------- | ---------------------------- | ------------------------------------------------ |
+| `feat`     | 新功能                       | feat(pet): add pet emotion analysis              |
+| `fix`      | Bug 修复                     | fix(api): resolve null pointer in user service   |
+| `docs`     | 文档更新                     | docs(readme): update installation guide          |
+| `style`    | 代码格式（不影响功能）       | style(component): fix indentation                |
+| `refactor` | 重构（不是新功能也不是修复） | refactor(auth): simplify token validation logic  |
+| `perf`     | 性能优化                     | perf(image): implement lazy loading              |
+| `test`     | 测试相关                     | test(user): add unit tests for user service      |
+| `chore`    | 构建/工具链变动              | chore(deps): upgrade nestjs to v11               |
+| `ci`       | CI/CD 配置                   | ci(github): add automated testing workflow       |
+| `revert`   | 回滚 commit                  | revert: revert "feat(pet): add emotion analysis" |
+
+### Scope 范围（可选）
+
+根据项目模块定义，建议使用：
+
+- `pet` - 宠物相关功能
+- `user` - 用户相关功能
+- `auth` - 认证授权
+- `community` - 社区功能
+- `health` - 健康管理
+- `ai` - AI 识别功能
+- `api` - API 接口
+- `ui` - UI 组件
+- `db` - 数据库
+
+### Subject 主题（必填）
+
+```bash
+# ✅ GOOD - 简洁、动词开头、小写、无句号
+feat(pet): add emotion detection api
+fix(auth): resolve jwt token expiration issue
+docs(api): update swagger documentation
+
+# ❌ BAD - 不规范
+feat(pet): Added emotion detection API.  # 大写、有句号
+fix: bug fix  # 不够具体
+update code  # 缺少 type 和范围
+```
+
+### 完整示例
+
+**简单提交**
+
+```bash
+git commit -m "feat(pet): add pet profile creation"
+git commit -m "fix(upload): resolve image compression error"
+git commit -m "docs(readme): add setup instructions"
+```
+
+**详细提交（带 body 和 footer）**
+
+```bash
+git commit -m "feat(ai): implement pet emotion recognition
+
+- Integrate Baidu AI API for emotion detection
+- Add confidence score calculation
+- Create emotion result card component
+
+Closes #123"
+```
+
+**Breaking Change（破坏性更新）**
+
+```bash
+git commit -m "feat(api)!: change user authentication endpoint
+
+BREAKING CHANGE: The /api/login endpoint has been replaced with /api/auth/login.
+All clients must update their API calls accordingly.
+
+Refs #456"
+```
+
+## Pull Request 规范
+
+### PR 标题格式
+
+使用与 commit message 相同的格式：
+
+```
+feat(pet): add emotion detection feature
+fix(auth): resolve login token validation
+```
+
+### PR 描述模板
+
+```markdown
+## 变更类型
+
+- [ ] 新功能 (feature)
+- [ ] Bug 修复 (bugfix)
+- [ ] 重构 (refactor)
+- [ ] 文档更新 (docs)
+- [ ] 其他
+
+## 变更内容
+
+简要描述本次 PR 的主要变更内容。
+
+## 相关 Issue
+
+Closes #123
+
+## 测试
+
+- [ ] 已添加单元测试
+- [ ] 已通过现有测试
+- [ ] 已手动测试
+- [ ] 无需测试
+
+## 截图（如适用）
+
+添加相关截图或 GIF。
+
+## Checklist
+
+- [ ] 代码遵循项目规范
+- [ ] 已更新相关文档
+- [ ] 无 linter 错误
+- [ ] 已 review 自己的代码
+```
+
+## 合并策略
+
+### 使用 Squash and Merge
+
+对于功能分支合并到 develop：
+
+```bash
+# ✅ GOOD - 将多个 commit 压缩为一个
+git merge --squash feature/pet-emotion
+git commit -m "feat(pet): add emotion detection feature"
+```
+
+### 保留 Commit 历史
+
+对于 release 分支合并到 main：
+
+```bash
+# ✅ GOOD - 保留完整的提交历史
+git merge --no-ff release/v1.0.0
+```
+
+## 常见场景
+
+### 修改最后一次 commit
+
+```bash
+# ✅ GOOD - 修改 commit message
+git commit --amend -m "feat(pet): add emotion detection api"
+
+# ✅ GOOD - 添加遗漏的文件
+git add forgotten-file.ts
+git commit --amend --no-edit
+```
+
+### 合并多个 commit
+
+```bash
+# ✅ GOOD - 使用 interactive rebase
+git rebase -i HEAD~3
+
+# 在编辑器中将 pick 改为 squash (s)
+pick abc123 feat(pet): add emotion service
+squash def456 feat(pet): add emotion types
+squash ghi789 feat(pet): update emotion tests
+```
+
+### 同步远程分支
+
+```bash
+# ✅ GOOD - 保持分支最新
+git checkout feature/my-feature
+git fetch origin
+git rebase origin/develop
+
+# 如果有冲突，解决后继续
+git add .
+git rebase --continue
+```
+
+### 回滚操作
+
+```bash
+# ✅ GOOD - 回滚到指定 commit（保留历史）
+git revert abc123
+
+# ✅ GOOD - 重置到指定 commit（谨慎使用）
+git reset --hard abc123
+
+# ❌ BAD - 不要 force push 到共享分支
+git push --force origin develop  # 避免！
+```
+
+## 最佳实践
+
+### Commit 频率
+
+- 每个逻辑变更单独提交
+- 避免一次提交过多变更
+- 提交前确保代码可运行
+
+### 代码审查
+
+- 所有代码必须通过 PR 审查后才能合并
+- PR 应该小而专注，易于审查
+- 及时响应审查意见
+
+### 分支维护
+
+- 定期删除已合并的分支
+- 保持分支与 develop 同步
+- 避免长期存在的功能分支
+
+### Commit 内容
+
+```bash
+# ✅ GOOD - 每个 commit 应该是独立的功能单元
+git commit -m "feat(pet): add pet model and repository"
+git commit -m "feat(pet): add pet service with CRUD operations"
+git commit -m "feat(pet): add pet controller and routes"
+
+# ❌ BAD - 一次提交太多不相关的变更
+git commit -m "add pet feature, fix user bug, update readme"
+```
+
+## Git 配置建议
+
+```bash
+# 设置用户信息
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# 配置默认编辑器
+git config --global core.editor "code --wait"
+
+# 设置默认分支名
+git config --global init.defaultBranch main
+
+# 启用颜色输出
+git config --global color.ui auto
+
+# 配置 pull 策略
+git config --global pull.rebase true
+
+# 配置 commit 模板（可选）
+git config --global commit.template ~/.gitmessage
+```
+
+## Git Hooks（推荐）
+
+在项目中添加 Git hooks 以自动化检查：
+
+**pre-commit** - 提交前检查
+
+```bash
+#!/bin/sh
+# .git/hooks/pre-commit
+
+# 运行 linter
+npm run lint
+
+# 运行类型检查
+npm run type-check
+```
+
+**commit-msg** - 检查 commit message 格式
+
+```bash
+#!/bin/sh
+# .git/hooks/commit-msg
+
+# 使用 commitlint 检查提交信息格式
+npx commitlint --edit $1
+```
+
+安装 commitlint：
+
+```bash
+npm install --save-dev @commitlint/cli @commitlint/config-conventional
+```
+
+配置 commitlint.config.js：
+
+```javascript
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      [
+        'feat',
+        'fix',
+        'docs',
+        'style',
+        'refactor',
+        'perf',
+        'test',
+        'chore',
+        'ci',
+        'revert'
+      ]
+    ]
+  }
+}
+```

@@ -1,0 +1,394 @@
+---
+description: React Native + Expo 前端开发规范和最佳实践
+globs: front-end/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React Native + Expo 前端开发规范
+
+## 组件设计
+
+### 函数组件和 Hooks
+
+- 始终使用函数组件，不使用类组件
+- 使用 TypeScript 定义组件 Props
+- 组件文件名使用 kebab-case，组件名使用 PascalCase
+
+```typescript
+// ✅ GOOD
+interface PetCardProps {
+  pet: Pet
+  onPress: (petId: string) => void
+}
+
+export function PetCard({ pet, onPress }: PetCardProps) {
+  return (
+    <TouchableOpacity onPress={() => onPress(pet.id)}>
+      <Text>{pet.name}</Text>
+    </TouchableOpacity>
+  )
+}
+
+// ❌ BAD - 不使用类组件
+class PetCard extends React.Component<PetCardProps> {
+  render() {
+    return <View>...</View>
+  }
+}
+```
+
+### Props 和状态管理
+
+- 解构 props 而非直接使用 props 对象
+- 使用 useState 管理本地状态
+- 使用 useMemo 和 useCallback 优化性能
+
+```typescript
+// ✅ GOOD
+export function PetList({ pets, onRefresh }: PetListProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await onRefresh();
+    setIsRefreshing(false);
+  }, [onRefresh]);
+
+  const sortedPets = useMemo(
+    () => pets.sort((a, b) => a.name.localeCompare(b.name)),
+    [pets]
+  );
+
+  return <FlatList data={sortedPets} refreshing={isRefreshing} />;
+}
+
+// ❌ BAD
+export function PetList(props: PetListProps) {
+  return <FlatList data={props.pets.sort(...)} />;
+}
+```
+
+## Expo Router 导航
+
+### 文件路由规范
+
+- 使用 Expo Router 的文件系统路由
+- 布局文件使用 \_layout.tsx
+- 动态路由使用 [id].tsx 格式
+
+```typescript
+// ✅ GOOD - app/(tabs)/pets/[id].tsx
+import { useLocalSearchParams } from 'expo-router'
+
+export default function PetDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>()
+
+  return <PetDetail petId={id} />
+}
+
+// ✅ GOOD - 类型安全的导航
+import { router } from 'expo-router'
+
+function navigateToPet(petId: string) {
+  router.push(`/pets/${petId}`)
+}
+```
+
+## 样式设计
+
+### StyleSheet 和主题
+
+- 使用 StyleSheet.create 而非内联样式
+- 从 constants/theme 引入颜色和尺寸
+- 使用 themed-view 和 themed-text 组件
+
+```typescript
+// ✅ GOOD
+import { StyleSheet } from 'react-native'
+import { Colors } from '@/constants/theme'
+import { ThemedView } from '@/components/themed-view'
+
+export function PetCard({ pet }: PetCardProps) {
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedText style={styles.name}>{pet.name}</ThemedText>
+    </ThemedView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '600'
+  }
+})
+
+// ❌ BAD - 避免内联样式
+;<View style={{ padding: 16, borderRadius: 12 }}>
+  <Text style={{ fontSize: 18, fontWeight: '600' }}>{pet.name}</Text>
+</View>
+```
+
+### 响应式设计
+
+- 使用 Dimensions 或 useWindowDimensions 获取屏幕尺寸
+- 避免固定宽高，使用 flex 布局
+- 考虑 iOS 和 Android 平台差异
+
+```typescript
+// ✅ GOOD
+import { useWindowDimensions } from 'react-native'
+
+export function ResponsiveGrid() {
+  const { width } = useWindowDimensions()
+  const numColumns = width > 768 ? 3 : 2
+
+  return <FlatList data={items} numColumns={numColumns} key={numColumns} />
+}
+```
+
+## 性能优化
+
+### 列表优化
+
+- 使用 FlatList 而非 ScrollView + map
+- 实现 keyExtractor 和 getItemLayout
+- 使用 React.memo 防止不必要的重渲染
+
+```typescript
+// ✅ GOOD
+const PetItem = React.memo(({ pet, onPress }: PetItemProps) => (
+  <TouchableOpacity onPress={() => onPress(pet.id)}>
+    <Text>{pet.name}</Text>
+  </TouchableOpacity>
+))
+
+export function PetList({ pets }: PetListProps) {
+  const renderItem = useCallback(
+    ({ item }: { item: Pet }) => <PetItem pet={item} onPress={handlePetPress} />,
+    [handlePetPress]
+  )
+
+  return (
+    <FlatList
+      data={pets}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id}
+      getItemLayout={(data, index) => ({
+        length: ITEM_HEIGHT,
+        offset: ITEM_HEIGHT * index,
+        index
+      })}
+    />
+  )
+}
+
+// ❌ BAD
+;<ScrollView>
+  {pets.map((pet) => (
+    <PetItem key={pet.id} pet={pet} />
+  ))}
+</ScrollView>
+```
+
+### 图片优化
+
+- 使用 expo-image 而非 Image
+- 提供 placeholder 和 contentFit
+- 实现图片缓存策略
+
+```typescript
+// ✅ GOOD
+import { Image } from 'expo-image';
+
+<Image
+  source={{ uri: pet.avatarUrl }}
+  placeholder={require('@/assets/images/placeholder.png')}
+  contentFit="cover"
+  style={styles.avatar}
+  cachePolicy="memory-disk"
+/>
+
+// ❌ BAD
+<Image source={{ uri: pet.avatarUrl }} style={styles.avatar} />
+```
+
+## 数据获取
+
+### API 调用
+
+- 使用 useEffect 配合 async 函数
+- 实现加载、错误和空状态
+- 使用 AbortController 清理请求
+
+```typescript
+// ✅ GOOD
+export function usePetData(petId: string) {
+  const [pet, setPet] = useState<Pet | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function fetchPet() {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/pets/${petId}`, {
+          signal: controller.signal
+        })
+        const data = await response.json()
+        setPet(data)
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          setError(err)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPet()
+    return () => controller.abort()
+  }, [petId])
+
+  return { pet, loading, error }
+}
+```
+
+## 用户体验
+
+### 触觉反馈
+
+- 使用 expo-haptics 提供触觉反馈
+- 在按钮点击、删除操作时触发
+
+```typescript
+// ✅ GOOD
+import * as Haptics from 'expo-haptics'
+
+async function handleDelete() {
+  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+  // delete logic
+}
+```
+
+### 加载状态
+
+- 使用 ActivityIndicator 显示加载
+- 提供骨架屏或占位符
+- 避免长时间空白界面
+
+```typescript
+// ✅ GOOD
+if (loading) {
+  return (
+    <ThemedView style={styles.center}>
+      <ActivityIndicator size="large" />
+    </ThemedView>
+  )
+}
+
+if (error) {
+  return (
+    <ThemedView style={styles.center}>
+      <ThemedText>加载失败: {error.message}</ThemedText>
+      <Button title="重试" onPress={retry} />
+    </ThemedView>
+  )
+}
+
+if (!data) {
+  return (
+    <ThemedView style={styles.center}>
+      <ThemedText>暂无数据</ThemedText>
+    </ThemedView>
+  )
+}
+
+return <DataView data={data} />
+```
+
+## TypeScript 规范
+
+### 类型定义
+
+- 为所有组件定义 Props 接口
+- 使用类型推断，避免显式 any
+- 共享类型定义在 types/ 目录
+
+```typescript
+// ✅ GOOD - types/pet.ts
+export interface Pet {
+  id: string
+  name: string
+  species: 'cat' | 'dog' | 'other'
+  breed?: string
+  birthDate: string
+  avatarUrl: string
+}
+
+export interface PetEmotion {
+  emotion: 'happy' | 'curious' | 'sad' | 'angry'
+  confidence: number
+  description: string
+}
+
+// ✅ GOOD - 组件中使用
+import type { Pet } from '@/types/pet'
+
+interface PetCardProps {
+  pet: Pet
+  onPress: (pet: Pet) => void
+}
+```
+
+## 代码组织
+
+### 文件结构
+
+- 组件文件导出单个主组件
+- 相关工具函数放在同文件或 utils/
+- 常量定义在 constants/
+
+```typescript
+// ✅ GOOD
+// components/pet-card.tsx
+interface PetCardProps { ... }
+
+function PetCardContent({ ... }) { ... }  // 内部组件
+
+export function PetCard({ pet }: PetCardProps) {  // 主导出
+  return <PetCardContent ... />;
+}
+
+// ❌ BAD - 避免多个默认导出
+export default function Component1() { ... }
+export function Component2() { ... }
+```
+
+### 导入顺序
+
+- React 相关导入
+- 第三方库
+- 本地组件和工具
+- 类型导入
+- 样式
+
+```typescript
+// ✅ GOOD
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { router } from 'expo-router'
+import { Image } from 'expo-image'
+
+import { ThemedView } from '@/components/themed-view'
+import { usePetData } from '@/hooks/use-pet-data'
+
+import type { Pet } from '@/types/pet'
+```

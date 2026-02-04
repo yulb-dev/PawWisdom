@@ -1,0 +1,306 @@
+---
+description: NestJS 后端开发规范和最佳实践
+globs: back-end/**/*.ts
+alwaysApply: false
+---
+
+# NestJS 后端开发规范
+
+## 架构模式
+
+### 模块组织
+
+- 使用功能模块（Feature Modules）组织代码
+- 每个模块包含：controller、service、entity/dto、module 文件
+- 共享功能提取到 common 或 shared 模块
+
+```typescript
+// ✅ GOOD - 清晰的模块结构
+src/
+  users/
+    users.controller.ts
+    users.service.ts
+    users.module.ts
+    dto/
+    entities/
+  common/
+    filters/
+    interceptors/
+    guards/
+```
+
+### 依赖注入
+
+- 始终使用构造函数注入，不使用属性注入
+- 使用 @Injectable() 装饰器标记可注入类
+
+```typescript
+// ✅ GOOD
+@Injectable()
+export class UsersService {
+  constructor(
+    private readonly userRepository: Repository<User>,
+    private readonly configService: ConfigService
+  ) {}
+}
+
+// ❌ BAD - 避免属性注入
+@Injectable()
+export class UsersService {
+  @Inject(UserRepository)
+  private userRepository: Repository<User>
+}
+```
+
+## 错误处理
+
+### 异常过滤器
+
+- 使用内置 HTTP 异常类
+- 创建自定义异常类继承 HttpException
+- 统一异常响应格式
+
+```typescript
+// ✅ GOOD
+throw new NotFoundException(`User with ID ${id} not found`)
+
+// ✅ GOOD - 自定义异常
+export class BusinessException extends HttpException {
+  constructor(message: string, statusCode: HttpStatus = HttpStatus.BAD_REQUEST) {
+    super(
+      {
+        statusCode,
+        message,
+        timestamp: new Date().toISOString()
+      },
+      statusCode
+    )
+  }
+}
+
+// ❌ BAD - 不直接 throw Error
+throw new Error('Something went wrong')
+```
+
+## DTO 和验证
+
+### 使用 class-validator
+
+- 所有输入 DTO 必须添加验证装饰器
+- 使用 ValidationPipe 全局启用验证
+- DTO 类使用 readonly 属性
+
+```typescript
+// ✅ GOOD
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  readonly name: string
+
+  @IsEmail()
+  readonly email: string
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  readonly age?: number
+}
+
+// main.ts
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true
+  })
+)
+```
+
+## 服务层设计
+
+### 单一职责
+
+- Service 只负责业务逻辑
+- 数据访问通过 Repository
+- 复杂业务拆分为多个私有方法
+
+```typescript
+// ✅ GOOD
+@Injectable()
+export class PetService {
+  constructor(
+    private readonly petRepository: Repository<Pet>,
+    private readonly aiService: AiService,
+    private readonly notificationService: NotificationService
+  ) {}
+
+  async analyzePetEmotion(petId: string, imageUrl: string): Promise<EmotionResult> {
+    const pet = await this.findPetById(petId)
+    const emotion = await this.aiService.detectEmotion(imageUrl)
+    await this.notificationService.sendEmotionResult(pet.ownerId, emotion)
+    return emotion
+  }
+
+  private async findPetById(id: string): Promise<Pet> {
+    const pet = await this.petRepository.findOne({ where: { id } })
+    if (!pet) {
+      throw new NotFoundException(`Pet with ID ${id} not found`)
+    }
+    return pet
+  }
+}
+```
+
+## 控制器设计
+
+### RESTful 设计
+
+- 使用标准 HTTP 方法和状态码
+- 路由命名使用复数名词
+- 使用装饰器明确响应类型
+
+```typescript
+// ✅ GOOD
+@Controller('pets')
+export class PetsController {
+  constructor(private readonly petsService: PetsService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async findAll(@Query() query: QueryPetsDto): Promise<Pet[]> {
+    return this.petsService.findAll(query)
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() createPetDto: CreatePetDto): Promise<Pet> {
+    return this.petsService.create(createPetDto)
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updatePetDto: UpdatePetDto
+  ): Promise<Pet> {
+    return this.petsService.update(id, updatePetDto)
+  }
+}
+```
+
+## 配置管理
+
+### 使用 ConfigModule
+
+- 环境变量通过 @nestjs/config 管理
+- 配置验证使用 Joi 或 class-validator
+- 不硬编码敏感信息
+
+```typescript
+// ✅ GOOD
+@Injectable()
+export class DatabaseService {
+  constructor(private configService: ConfigService) {}
+
+  getConnection() {
+    return {
+      host: this.configService.get<string>('DATABASE_HOST'),
+      port: this.configService.get<number>('DATABASE_PORT')
+    }
+  }
+}
+
+// ❌ BAD
+const connection = {
+  host: 'localhost',
+  port: 5432
+}
+```
+
+## 测试
+
+### 单元测试
+
+- 使用 Jest 和 @nestjs/testing
+- Mock 所有外部依赖
+- 测试文件与源文件同目录
+
+```typescript
+// ✅ GOOD
+describe('PetsService', () => {
+  let service: PetsService
+  let repository: Repository<Pet>
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PetsService,
+        {
+          provide: getRepositoryToken(Pet),
+          useValue: {
+            find: jest.fn(),
+            findOne: jest.fn(),
+            save: jest.fn()
+          }
+        }
+      ]
+    }).compile()
+
+    service = module.get<PetsService>(PetsService)
+    repository = module.get<Repository<Pet>>(getRepositoryToken(Pet))
+  })
+
+  it('should find all pets', async () => {
+    const pets = [{ id: '1', name: 'Fluffy' }]
+    jest.spyOn(repository, 'find').mockResolvedValue(pets)
+    expect(await service.findAll()).toEqual(pets)
+  })
+})
+```
+
+## 代码风格
+
+### TypeScript 规范
+
+- 启用 strict 模式
+- 使用接口定义契约，使用类实现逻辑
+- 避免使用 any 类型
+
+```typescript
+// ✅ GOOD
+interface PetRepository {
+  findById(id: string): Promise<Pet | null>
+}
+
+@Injectable()
+export class PetService implements PetRepository {
+  async findById(id: string): Promise<Pet | null> {
+    // implementation
+  }
+}
+
+// ❌ BAD
+async function getPet(id: any): Promise<any> {
+  // avoid any
+}
+```
+
+### 异步处理
+
+- 优先使用 async/await
+- 正确处理 Promise 错误
+- 避免嵌套回调
+
+```typescript
+// ✅ GOOD
+async function processData(): Promise<void> {
+  try {
+    const data = await fetchData()
+    const processed = await processData(data)
+    await saveData(processed)
+  } catch (error) {
+    logger.error('Failed to process data', error)
+    throw new InternalServerErrorException('Data processing failed')
+  }
+}
+```
