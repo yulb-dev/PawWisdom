@@ -6,17 +6,17 @@ module.exports = {
       2,
       'always',
       [
-        'feat',     // 新功能
-        'fix',      // Bug 修复
-        'docs',     // 文档更新
-        'style',    // 代码格式（不影响功能）
+        'feat', // 新功能
+        'fix', // Bug 修复
+        'docs', // 文档更新
+        'style', // 代码格式（不影响功能）
         'refactor', // 重构
-        'perf',     // 性能优化
-        'test',     // 测试相关
-        'chore',    // 构建/工具链变动
-        'ci',       // CI/CD 配置
-        'revert',   // 回滚
-      ],
+        'perf', // 性能优化
+        'test', // 测试相关
+        'chore', // 构建/工具链变动
+        'ci', // CI/CD 配置
+        'revert' // 回滚
+      ]
     ],
     // Subject 不能为空
     'subject-empty': [2, 'never'],
@@ -29,6 +29,6 @@ module.exports = {
     // Scope 必须小写
     'scope-case': [2, 'always', 'lower-case'],
     // Header 最大长度
-    'header-max-length': [2, 'always', 100],
-  },
-};
+    'header-max-length': [2, 'always', 100]
+  }
+}
