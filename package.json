@@ -1,0 +1,25 @@
+{
+  "name": "pawwisdom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PawWisdom - AI驱动的宠物健康与生活社区",
+  "scripts": {
+    "prepare": "husky",
+    "lint:backend": "cd back-end && pnpm lint",
+    "lint:frontend": "cd front-end && npm run lint"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "back-end/**/*.{ts,tsx}": [
+      "cd back-end && pnpm exec eslint --fix"
+    ],
+    "front-end/**/*.{ts,tsx}": [
+      "cd front-end && npm exec eslint --fix"
+    ]
+  }
+}
