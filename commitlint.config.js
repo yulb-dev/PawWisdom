@@ -18,24 +18,6 @@ module.exports = {
         'revert',   // 回滚
       ],
     ],
-    // Scope 枚举（可选，根据项目模块定义）
-    'scope-enum': [
-      2,
-      'always',
-      [
-        'pet',      // 宠物相关功能
-        'user',     // 用户相关功能
-        'auth',     // 认证授权
-        'community',// 社区功能
-        'health',   // 健康管理
-        'ai',       // AI 识别功能
-        'api',      // API 接口
-        'ui',       // UI 组件
-        'db',       // 数据库
-        'deps',     // 依赖更新
-        'config',   // 配置文件
-      ],
-    ],
     // Subject 不能为空
     'subject-empty': [2, 'never'],
     // Subject 不能以句号结尾

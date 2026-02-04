@@ -1,6 +1,6 @@
 # PawWisdom
 
-AI驱动的宠物健康与生活社区
+AI 驱动的宠物健康与生活社区
 
 ## 项目结构
 
@@ -24,6 +24,7 @@ PawWisdom/
 ## 技术栈
 
 ### 后端
+
 - **框架**: NestJS 11
 - **语言**: TypeScript 5.7
 - **包管理**: pnpm
@@ -31,11 +32,12 @@ PawWisdom/
 - **代码规范**: ESLint + Prettier
 
 ### 前端
+
 - **框架**: React Native 0.81 + Expo 54
 - **路由**: Expo Router 6
 - **语言**: TypeScript 5.9
 - **包管理**: npm
-- **代码规范**: ESLint (expo配置)
+- **代码规范**: ESLint (expo 配置)
 
 ## 快速开始
 
@@ -61,12 +63,14 @@ npm install
 ### 2. 启动开发服务器
 
 **后端**:
+
 ```bash
 cd back-end
 pnpm start:dev
 ```
 
 **前端**:
+
 ```bash
 cd front-end
 npm start
@@ -88,6 +92,7 @@ npm start
 格式：`<type>(<scope>): <subject>`
 
 **Type**:
+
 - `feat`: 新功能
 - `fix`: Bug 修复
 - `docs`: 文档更新
@@ -99,9 +104,11 @@ npm start
 - `ci`: CI/CD
 
 **Scope**:
+
 - `pet`, `user`, `auth`, `community`, `health`, `ai`, `api`, `ui`, `db`, `deps`, `config`
 
 **示例**:
+
 ```bash
 git commit -m "feat(pet): add emotion detection api"
 git commit -m "fix(auth): resolve jwt token expiration"
@@ -119,16 +126,19 @@ git commit -m "docs(readme): update setup guide"
 ## 分支管理
 
 ### 主要分支
+
 - `main`: 生产环境分支
 - `develop`: 开发主分支
 
 ### 功能分支命名
+
 - `feature/<description>`: 新功能开发
 - `bugfix/<description>`: Bug 修复
 - `hotfix/<description>`: 紧急修复
 - `release/<version>`: 发布准备
 
 ### 工作流
+
 ```bash
 # 创建功能分支
 git checkout develop
@@ -145,6 +155,7 @@ git push -u origin feature/pet-profile
 ## 代码检查
 
 ### 后端
+
 ```bash
 cd back-end
 pnpm lint          # 运行 ESLint
@@ -153,6 +164,7 @@ pnpm test          # 运行测试
 ```
 
 ### 前端
+
 ```bash
 cd front-end
 npm run lint       # 运行 ESLint
@@ -167,6 +179,7 @@ npm run lint       # 运行 ESLint
 ## 环境变量
 
 ### 后端 (.env)
+
 ```env
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
@@ -176,6 +189,7 @@ DATABASE_PASSWORD=your_password
 ```
 
 ### 前端 (.env)
+
 ```env
 EXPO_PUBLIC_API_URL=http://localhost:3000/api
 ```
@@ -183,6 +197,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3000/api
 ## 测试
 
 ### 后端测试
+
 ```bash
 cd back-end
 pnpm test          # 单元测试
@@ -193,6 +208,7 @@ pnpm test:cov      # 测试覆盖率
 ## 构建
 
 ### 后端
+
 ```bash
 cd back-end
 pnpm build
@@ -200,6 +216,7 @@ pnpm start:prod
 ```
 
 ### 前端
+
 ```bash
 cd front-end
 npm run android    # Android 构建
@@ -221,6 +238,6 @@ npm run web        # Web 构建
 
 ## 联系方式
 
-- 项目负责人: [Your Name]
-- Email: [your.email@example.com]
-- 项目地址: [GitHub Repository URL]
+- 项目负责人: Yuxx
+- Email: yuxx6698@163.com
+- 项目地址: [PawWisdom](https://github.com/yulb-dev/PawWisdom)
