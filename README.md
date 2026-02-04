@@ -1,24 +1,28 @@
 # PawWisdom
 
-AI 驱动的宠物健康与生活社区
+🐾 AI 驱动的宠物健康与生活社区
 
 ## 项目结构
 
 ```
 PawWisdom/
-├── back-end/          # NestJS 后端服务
-├── front-end/         # React Native (Expo) 移动端应用
-├── .cursor/rules/     # Cursor AI 开发规范
+├── back-end/                    # NestJS 后端服务
+├── front-end/                   # React Native (Expo) 移动端应用
+├── .cursor/rules/               # Cursor AI 开发规范
 │   ├── backend-nestjs.mdc
+│   ├── database-supabase-typeorm.mdc
 │   ├── frontend-react-native.mdc
 │   └── git-workflow.mdc
-├── .husky/            # Git Hooks
+├── .husky/                      # Git Hooks
 │   ├── pre-commit
 │   └── commit-msg
-├── package.json       # 根目录依赖管理
-├── commitlint.config.js
-├── GIT_HOOKS.md      # Git Hooks 使用说明
-└── prd.md            # 产品需求文档
+├── pnpm-workspace.yaml          # pnpm Workspace 配置
+├── package.json                 # 根目录依赖管理
+├── commitlint.config.js         # Commit message 验证规则
+├── dev-iteration-plan.md        # 开发迭代计划
+├── GIT_HOOKS.md                 # Git Hooks 使用说明
+├── PNPM_WORKSPACE_GUIDE.md      # pnpm Workspace 使用指南
+└── prd.md                       # 产品需求文档
 ```
 
 ## 技术栈
@@ -27,8 +31,8 @@ PawWisdom/
 
 - **框架**: NestJS 11
 - **语言**: TypeScript 5.7
-- **包管理**: pnpm
 - **数据库**: PostgreSQL (Supabase)
+- **ORM**: TypeORM
 - **代码规范**: ESLint + Prettier
 
 ### 前端
@@ -36,10 +40,20 @@ PawWisdom/
 - **框架**: React Native 0.81 + Expo 54
 - **路由**: Expo Router 6
 - **语言**: TypeScript 5.9
-- **包管理**: npm
 - **代码规范**: ESLint (expo 配置)
 
+### Monorepo 管理
+
+- **包管理器**: pnpm 8+ (Workspace)
+- **依赖共享**: 自动去重和符号链接
+- **统一管理**: 一键安装所有子项目依赖
+
 ## 快速开始
+
+### 前置要求
+
+- Node.js 18+
+- pnpm 8+ （如果没有安装：`npm install -g pnpm`）
 
 ### 1. 克隆项目并安装依赖
 
@@ -48,33 +62,31 @@ PawWisdom/
 git clone <repository-url>
 cd PawWisdom
 
-# 安装根目录依赖（Git Hooks）
-npm install
-
-# 安装后端依赖
-cd back-end
+# 使用 pnpm workspace 一键安装所有依赖（包括根目录、后端、前端）
 pnpm install
-
-# 安装前端依赖
-cd ../front-end
-npm install
 ```
+
+就这么简单！pnpm workspace 会自动安装所有子项目的依赖。
 
 ### 2. 启动开发服务器
 
-**后端**:
+**方式 1：同时启动前后端（推荐）**
 
 ```bash
-cd back-end
-pnpm start:dev
+pnpm run dev
 ```
 
-**前端**:
+**方式 2：单独启动**
 
 ```bash
-cd front-end
-npm start
+# 仅启动后端
+pnpm run dev:backend
+
+# 仅启动前端
+pnpm run dev:frontend
 ```
+
+所有命令都在根目录执行，无需切换到子项目目录！
 
 ## 开发规范
 
@@ -153,22 +165,65 @@ git commit -m "feat(pet): add pet profile creation"
 git push -u origin feature/pet-profile
 ```
 
-## 代码检查
+## 常用命令
 
-### 后端
+### 依赖管理
 
 ```bash
-cd back-end
-pnpm lint          # 运行 ESLint
-pnpm format        # 运行 Prettier
-pnpm test          # 运行测试
+# 为后端添加依赖
+pnpm --filter back-end add <package-name>
+
+# 为前端添加依赖
+pnpm --filter front-end add <package-name>
+
+# 添加开发依赖
+pnpm --filter back-end add -D <package-name>
+
+# 在根目录添加依赖（通常是开发工具）
+pnpm add -w <package-name>
 ```
 
-### 前端
+### 代码检查
 
 ```bash
-cd front-end
-npm run lint       # 运行 ESLint
+# 检查所有项目
+pnpm run lint
+
+# 仅检查后端
+pnpm run lint:backend
+
+# 仅检查前端
+pnpm run lint:frontend
+```
+
+### 测试
+
+```bash
+# 后端测试
+pnpm run test:backend
+
+# 前端测试
+pnpm run test:frontend
+```
+
+### 构建
+
+```bash
+# 构建所有项目
+pnpm run build
+
+# 仅构建后端
+pnpm run build:backend
+
+# 仅构建前端
+pnpm run build:frontend
+```
+
+### 清理
+
+```bash
+# 清理所有 node_modules
+pnpm run clean
 ```
 
 ## 项目文档
@@ -176,6 +231,11 @@ npm run lint       # 运行 ESLint
 - [产品需求文档 (PRD)](./prd.md)
 - [开发迭代计划](./dev-iteration-plan.md)
 - [Git Hooks 使用说明](./GIT_HOOKS.md)
+- [pnpm Workspace 使用指南](./PNPM_WORKSPACE_GUIDE.md)
+- [Git 工作流规范](./.cursor/rules/git-workflow.mdc)
+- [后端开发规范](./.cursor/rules/backend-nestjs.mdc)
+- [前端开发规范](./.cursor/rules/frontend-react-native.mdc)
+- [数据库开发规范](./.cursor/rules/database-supabase-typeorm.mdc)
 
 ## 环境变量
 
@@ -195,34 +255,32 @@ DATABASE_PASSWORD=your_password
 EXPO_PUBLIC_API_URL=http://localhost:3000/api
 ```
 
-## 测试
+## 部署
 
-### 后端测试
+### 后端部署
 
 ```bash
-cd back-end
-pnpm test          # 单元测试
-pnpm test:e2e      # E2E 测试
-pnpm test:cov      # 测试覆盖率
+# 构建后端
+pnpm run build:backend
+
+# 生产环境启动（需要先进入 back-end 目录）
+cd back-end && pnpm start:prod
 ```
 
-## 构建
-
-### 后端
+### 前端构建
 
 ```bash
-cd back-end
-pnpm build
-pnpm start:prod
-```
+# 开发预览
+pnpm run dev:frontend
 
-### 前端
+# Android 构建（需要在 front-end 目录）
+cd front-end && pnpm android
 
-```bash
-cd front-end
-npm run android    # Android 构建
-npm run ios        # iOS 构建
-npm run web        # Web 构建
+# iOS 构建（需要在 front-end 目录）
+cd front-end && pnpm ios
+
+# Web 构建（需要在 front-end 目录）
+cd front-end && pnpm web
 ```
 
 ## 贡献指南
@@ -232,6 +290,23 @@ npm run web        # Web 构建
 3. 提交更改 (`git commit -m 'feat(scope): add amazing feature'`)
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建 Pull Request
+
+## 开发分支
+
+本项目当前在 `feature/iteration-1-user-system` 分支进行迭代 1 的开发：
+
+- **主分支**: `main` - 生产环境代码
+- **开发分支**: `develop` - 开发主分支
+- **当前迭代**: `feature/iteration-1-user-system` - 用户系统与宠物档案功能
+
+## 技术亮点
+
+✅ 采用 **pnpm Workspace** 管理 Monorepo，依赖共享、安装快速
+✅ 完整的 **Git Hooks** 配置，自动代码检查和提交信息验证
+✅ 遵循 **Conventional Commits** 规范，提交历史清晰可追溯
+✅ 配置 **Cursor AI Rules**，AI 辅助开发遵循最佳实践
+✅ 前后端统一的 **TypeScript** 开发体验
+✅ 使用 **Supabase** 提供后端服务（数据库、认证、存储）
 
 ## 许可证
 
