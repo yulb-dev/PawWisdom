@@ -1,0 +1,608 @@
+---
+description: Supabase 和 TypeORM 数据库开发规范
+globs: back-end/**/*.ts
+alwaysApply: false
+---
+
+# Supabase + TypeORM 数据库规范
+
+## Supabase 集成
+
+### 连接配置
+
+- 使用环境变量存储 Supabase 连接信息
+- 通过 TypeORM 连接到 Supabase PostgreSQL
+
+```typescript
+// ✅ GOOD - 使用 ConfigModule 和环境变量
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { ConfigService } from '@nestjs/config'
+
+TypeOrmModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    type: 'postgres',
+    host: config.get('SUPABASE_DB_HOST'),
+    port: config.get('SUPABASE_DB_PORT'),
+    username: config.get('SUPABASE_DB_USER'),
+    password: config.get('SUPABASE_DB_PASSWORD'),
+    database: config.get('SUPABASE_DB_NAME'),
+    entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    synchronize: false, // 生产环境必须为 false
+    ssl: { rejectUnauthorized: false }
+  })
+})
+
+// ❌ BAD - 硬编码连接信息
+const connection = {
+  host: 'db.xxxxx.supabase.co',
+  password: 'my-password'
+}
+```
+
+### Supabase 特性利用
+
+- 使用 Row Level Security (RLS) 确保数据安全
+- 利用 Supabase Storage 存储图片/文件
+- 使用 Supabase Auth 与数据库集成
+
+```typescript
+// ✅ GOOD - 结合 RLS 的服务设计
+@Injectable()
+export class PetService {
+  constructor(
+    private readonly petRepository: Repository<Pet>,
+    @Inject('SUPABASE_CLIENT') private supabase: SupabaseClient
+  ) {}
+
+  async uploadPetImage(file: Express.Multer.File, userId: string): Promise<string> {
+    const fileName = `${userId}/${Date.now()}-${file.originalname}`
+    const { data, error } = await this.supabase.storage
+      .from('pet-images')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      })
+
+    if (error) {
+      throw new InternalServerErrorException('Failed to upload image')
+    }
+
+    const {
+      data: { publicUrl }
+    } = this.supabase.storage.from('pet-images').getPublicUrl(fileName)
+
+    return publicUrl
+  }
+}
+```
+
+## TypeORM 实体设计
+
+### 实体定义规范
+
+- 使用装饰器定义实体和列
+- 主键统一使用 UUID
+- 添加创建/更新时间戳
+- 使用合适的列类型和约束
+
+```typescript
+// ✅ GOOD - 完整的实体定义
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn
+} from 'typeorm'
+
+@Entity('pets')
+export class Pet {
+  @PrimaryGeneratedColumn('uuid')
+  id: string
+
+  @Column({ type: 'varchar', length: 100 })
+  name: string
+
+  @Column({ type: 'varchar', length: 50 })
+  species: string
+
+  @Column({ type: 'int', nullable: true })
+  age?: number
+
+  @Column({ type: 'text', nullable: true })
+  description?: string
+
+  @Column({ type: 'uuid' })
+  ownerId: string
+
+  @Column({ type: 'varchar', nullable: true })
+  imageUrl?: string
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date
+
+  @Column({ type: 'boolean', default: false })
+  isDeleted: boolean
+}
+
+// ❌ BAD - 缺少类型和约束
+@Entity()
+export class Pet {
+  @PrimaryGeneratedColumn()
+  id: number
+
+  @Column()
+  name: string
+
+  @Column()
+  data: any // 避免使用 any
+}
+```
+
+### 关系定义
+
+- 使用 @ManyToOne、@OneToMany、@ManyToMany 定义关系
+- 配置级联操作和懒加载
+- 使用 JoinColumn 指定外键列名
+
+```typescript
+// ✅ GOOD - 清晰的关系定义
+@Entity('pets')
+export class Pet {
+  @PrimaryGeneratedColumn('uuid')
+  id: string
+
+  @ManyToOne(() => User, (user) => user.pets, { eager: false })
+  @JoinColumn({ name: 'owner_id' })
+  owner: User
+
+  @OneToMany(() => HealthRecord, (record) => record.pet, { cascade: true })
+  healthRecords: HealthRecord[]
+}
+
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string
+
+  @OneToMany(() => Pet, (pet) => pet.owner)
+  pets: Pet[]
+}
+
+@Entity('health_records')
+export class HealthRecord {
+  @PrimaryGeneratedColumn('uuid')
+  id: string
+
+  @ManyToOne(() => Pet, (pet) => pet.healthRecords, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'pet_id' })
+  pet: Pet
+}
+```
+
+### 枚举类型
+
+- 使用 TypeScript enum 配合数据库 enum
+- 保持代码和数据库类型一致
+
+```typescript
+// ✅ GOOD - 枚举定义
+export enum PetSpecies {
+  DOG = 'dog',
+  CAT = 'cat',
+  BIRD = 'bird',
+  FISH = 'fish',
+  OTHER = 'other'
+}
+
+@Entity('pets')
+export class Pet {
+  @Column({
+    type: 'enum',
+    enum: PetSpecies,
+    default: PetSpecies.OTHER
+  })
+  species: PetSpecies
+}
+```
+
+## Repository 模式
+
+### 自定义 Repository
+
+- 继承 TypeORM Repository
+- 封装复杂查询逻辑
+- 使用 QueryBuilder 进行复杂查询
+
+```typescript
+// ✅ GOOD - 自定义 Repository
+@Injectable()
+export class PetRepository extends Repository<Pet> {
+  constructor(dataSource: DataSource) {
+    super(Pet, dataSource.createEntityManager())
+  }
+
+  async findActiveByOwner(ownerId: string): Promise<Pet[]> {
+    return this.createQueryBuilder('pet')
+      .where('pet.ownerId = :ownerId', { ownerId })
+      .andWhere('pet.isDeleted = :isDeleted', { isDeleted: false })
+      .orderBy('pet.createdAt', 'DESC')
+      .getMany()
+  }
+
+  async searchPets(query: string, limit: number = 10): Promise<Pet[]> {
+    return this.createQueryBuilder('pet')
+      .where('pet.isDeleted = false')
+      .andWhere('(pet.name ILIKE :query OR pet.description ILIKE :query)', {
+        query: `%${query}%`
+      })
+      .take(limit)
+      .getMany()
+  }
+}
+
+// ❌ BAD - 在 Service 中写复杂查询
+@Injectable()
+export class PetService {
+  async findPets(ownerId: string) {
+    return this.petRepository
+      .createQueryBuilder('pet')
+      .where('pet.ownerId = :ownerId', { ownerId })
+      .andWhere('pet.isDeleted = false')
+      .getMany()
+    // 应该封装到 Repository 中
+  }
+}
+```
+
+### 事务处理
+
+- 使用 QueryRunner 或 @Transaction 装饰器
+- 确保事务正确提交或回滚
+- 处理并发冲突
+
+```typescript
+// ✅ GOOD - 使用 QueryRunner 管理事务
+@Injectable()
+export class PetService {
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly petRepository: Repository<Pet>
+  ) {}
+
+  async transferPetOwnership(petId: string, newOwnerId: string): Promise<Pet> {
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
+
+    try {
+      const pet = await queryRunner.manager.findOne(Pet, {
+        where: { id: petId }
+      })
+
+      if (!pet) {
+        throw new NotFoundException('Pet not found')
+      }
+
+      pet.ownerId = newOwnerId
+      const updatedPet = await queryRunner.manager.save(pet)
+
+      // 记录转让历史
+      await queryRunner.manager.insert(OwnershipHistory, {
+        petId,
+        newOwnerId,
+        transferDate: new Date()
+      })
+
+      await queryRunner.commitTransaction()
+      return updatedPet
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error
+    } finally {
+      await queryRunner.release()
+    }
+  }
+}
+```
+
+## 查询优化
+
+### 使用索引
+
+- 在频繁查询的列上创建索引
+- 使用 @Index 装饰器定义索引
+
+```typescript
+// ✅ GOOD - 添加索引
+@Entity('pets')
+@Index(['ownerId', 'isDeleted'])
+@Index(['species'])
+export class Pet {
+  @Column({ type: 'uuid' })
+  @Index()
+  ownerId: string
+
+  @Column({ type: 'varchar', length: 50 })
+  species: string
+}
+```
+
+### 避免 N+1 查询
+
+- 使用 relations 或 leftJoinAndSelect
+- 使用 eager 加载常用关系
+
+```typescript
+// ✅ GOOD - 一次查询加载关系
+async findPetsWithOwner(ownerId: string): Promise<Pet[]> {
+  return this.petRepository.find({
+    where: { ownerId, isDeleted: false },
+    relations: ['owner', 'healthRecords']
+  })
+}
+
+// 或使用 QueryBuilder
+async findPetsWithDetails(ownerId: string): Promise<Pet[]> {
+  return this.petRepository
+    .createQueryBuilder('pet')
+    .leftJoinAndSelect('pet.owner', 'owner')
+    .leftJoinAndSelect('pet.healthRecords', 'records')
+    .where('pet.ownerId = :ownerId', { ownerId })
+    .getMany()
+}
+
+// ❌ BAD - N+1 查询问题
+async findPetsWithOwner(ownerId: string) {
+  const pets = await this.petRepository.find({ where: { ownerId } })
+  for (const pet of pets) {
+    pet.owner = await this.userRepository.findOne({ where: { id: pet.ownerId } })
+  }
+  return pets
+}
+```
+
+### 分页查询
+
+- 使用 skip 和 take 实现分页
+- 返回总数和数据
+
+```typescript
+// ✅ GOOD - 标准分页
+interface PaginatedResult<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+}
+
+async findPaginated(page: number = 1, limit: number = 10): Promise<PaginatedResult<Pet>> {
+  const [data, total] = await this.petRepository.findAndCount({
+    where: { isDeleted: false },
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { createdAt: 'DESC' }
+  })
+
+  return {
+    data,
+    total,
+    page,
+    limit
+  }
+}
+```
+
+## 数据迁移
+
+### 迁移文件管理
+
+- 使用 TypeORM CLI 生成迁移
+- 不手动修改已应用的迁移
+- 迁移文件按时间戳命名
+
+```bash
+# ✅ GOOD - 生成迁移
+npm run typeorm migration:generate -- -n CreatePetTable
+npm run typeorm migration:run
+
+# ❌ BAD - 直接修改数据库
+# 不要绕过迁移直接修改生产数据库
+```
+
+```typescript
+// ✅ GOOD - 迁移文件示例
+import { MigrationInterface, QueryRunner, Table } from 'typeorm'
+
+export class CreatePetTable1234567890123 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.createTable(
+      new Table({
+        name: 'pets',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            default: 'uuid_generate_v4()'
+          },
+          {
+            name: 'name',
+            type: 'varchar',
+            length: '100',
+            isNullable: false
+          },
+          {
+            name: 'owner_id',
+            type: 'uuid',
+            isNullable: false
+          },
+          {
+            name: 'created_at',
+            type: 'timestamptz',
+            default: 'now()'
+          }
+        ],
+        foreignKeys: [
+          {
+            columnNames: ['owner_id'],
+            referencedTableName: 'users',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE'
+          }
+        ]
+      })
+    )
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropTable('pets')
+  }
+}
+```
+
+## 数据验证和清理
+
+### 输入验证
+
+- 在 DTO 层验证数据
+- 在 Entity 层定义约束
+- 使用 @BeforeInsert 和 @BeforeUpdate 钩子
+
+```typescript
+// ✅ GOOD - 实体层验证和转换
+@Entity('pets')
+export class Pet {
+  @Column({ type: 'varchar', length: 100 })
+  name: string
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  email?: string
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  normalizeData() {
+    // 自动清理和规范化数据
+    this.name = this.name.trim()
+    if (this.email) {
+      this.email = this.email.toLowerCase().trim()
+    }
+  }
+}
+```
+
+## 软删除
+
+### 实现软删除
+
+- 使用 isDeleted 标志位
+- 查询时默认过滤已删除数据
+- 提供恢复功能
+
+```typescript
+// ✅ GOOD - 软删除实现
+@Entity('pets')
+export class Pet {
+  @Column({ type: 'boolean', default: false })
+  isDeleted: boolean
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt?: Date
+}
+
+@Injectable()
+export class PetService {
+  async softDelete(id: string): Promise<void> {
+    await this.petRepository.update(id, {
+      isDeleted: true,
+      deletedAt: new Date()
+    })
+  }
+
+  async restore(id: string): Promise<Pet> {
+    await this.petRepository.update(id, {
+      isDeleted: false,
+      deletedAt: null
+    })
+    return this.petRepository.findOne({ where: { id } })
+  }
+
+  async findAll(): Promise<Pet[]> {
+    return this.petRepository.find({
+      where: { isDeleted: false }
+    })
+  }
+}
+```
+
+## 性能最佳实践
+
+### 批量操作
+
+- 使用批量插入/更新减少数据库往返
+
+```typescript
+// ✅ GOOD - 批量插入
+async createMultiplePets(pets: CreatePetDto[]): Promise<Pet[]> {
+  const petEntities = pets.map(dto => this.petRepository.create(dto))
+  return this.petRepository.save(petEntities)
+}
+
+// ❌ BAD - 循环单条插入
+async createMultiplePets(pets: CreatePetDto[]): Promise<Pet[]> {
+  const results = []
+  for (const pet of pets) {
+    results.push(await this.petRepository.save(pet))
+  }
+  return results
+}
+```
+
+### 选择性加载字段
+
+- 只查询需要的字段
+
+```typescript
+// ✅ GOOD - 只选择必要字段
+async findPetNames(): Promise<Array<{ id: string; name: string }>> {
+  return this.petRepository
+    .createQueryBuilder('pet')
+    .select(['pet.id', 'pet.name'])
+    .where('pet.isDeleted = false')
+    .getMany()
+}
+```
+
+## 错误处理
+
+### 数据库错误处理
+
+- 捕获并转换数据库错误
+- 提供有意义的错误信息
+
+```typescript
+// ✅ GOOD - 优雅的错误处理
+@Injectable()
+export class PetService {
+  async create(createPetDto: CreatePetDto): Promise<Pet> {
+    try {
+      const pet = this.petRepository.create(createPetDto)
+      return await this.petRepository.save(pet)
+    } catch (error) {
+      if (error.code === '23505') {
+        // 唯一约束违反
+        throw new ConflictException('Pet with this name already exists')
+      }
+      if (error.code === '23503') {
+        // 外键约束违反
+        throw new BadRequestException('Invalid owner ID')
+      }
+      throw new InternalServerErrorException('Failed to create pet')
+    }
+  }
+}
+```
