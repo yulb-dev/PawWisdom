@@ -5,12 +5,16 @@
   "description": "PawWisdom - AI驱动的宠物健康与生活社区",
   "scripts": {
     "prepare": "husky",
+    "dev:backend": "cd back-end && pnpm start:dev",
+    "dev:frontend": "cd front-end && npm start",
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "lint:backend": "cd back-end && pnpm lint",
     "lint:frontend": "cd front-end && npm run lint"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
+    "concurrently": "^9.1.2",
     "husky": "^9.0.0",
     "lint-staged": "^15.0.0"
   },

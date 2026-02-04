@@ -94,6 +94,76 @@ function navigateToPet(petId: string) {
 }
 ```
 
+## UI 设计稿参考
+
+### 设计稿位置
+
+- **设计稿路径**: `ui/` 目录存放所有 UI 设计稿
+- **引用方式**: 使用 `@ui/文件名` 引用设计稿
+- **当前设计稿**: `ui/Screen@4x.jpg` - 主要界面设计
+
+### 开发时参考设计稿
+
+在开发前端组件和页面时，始终参考设计稿来确保：
+
+```typescript
+// 在开发时，请参考设计稿实现以下内容：
+// 1. 组件布局和间距（padding, margin）
+// 2. 颜色和字体样式
+// 3. 图标和图片位置
+// 4. 交互元素的尺寸和位置
+// 5. 响应式布局规则
+
+// ✅ GOOD - 严格按照设计稿实现
+const styles = StyleSheet.create({
+  container: {
+    padding: 16, // 参考设计稿的间距
+    borderRadius: 12, // 参考设计稿的圆角
+    backgroundColor: '#F5F5F5' // 参考设计稿的颜色
+  }
+})
+
+// ❌ BAD - 随意设置样式，未参考设计稿
+const styles = StyleSheet.create({
+  container: {
+    padding: 20, // 未参考设计稿
+    borderRadius: 8
+  }
+})
+```
+
+### 如何使用设计稿
+
+1. **查看设计稿**: 在对话中使用 `@ui/Screen@4x.jpg` 引用设计稿
+2. **提取样式**: 从设计稿中识别颜色值、字体大小、间距等
+3. **保持一致**: 确保实现的组件与设计稿完全匹配
+4. **细节优化**: 注意阴影、渐变、动画等细节效果
+
+```typescript
+// ✅ GOOD - 在实现时明确说明参考了设计稿的哪部分
+// 例如: "根据设计稿顶部导航栏设计"
+export function NavigationHeader() {
+  return (
+    <ThemedView style={styles.header}>
+      <ThemedText style={styles.title}>PawWisdom</ThemedText>
+    </ThemedView>
+  )
+}
+
+const styles = StyleSheet.create({
+  header: {
+    height: 56, // 设计稿中导航栏高度
+    paddingHorizontal: 16, // 设计稿中左右边距
+    backgroundColor: '#FFFFFF'
+  },
+  title: {
+    fontSize: 20, // 设计稿中标题字号
+    fontWeight: '600', // 设计稿中字重
+    color: '#1A1A1A' // 设计稿中文字颜色
+  }
+})
+```
+
 ## 样式设计
 
 ### StyleSheet 和主题

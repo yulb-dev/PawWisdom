@@ -49,7 +49,7 @@ git checkout -b feature/pet-health-check
 
 # 2. 开发并提交
 git add .
-git commit -m "feat(health): add pet health check form"
+git commit -m "feat(health): 添加宠物健康检查表单"
 
 # 3. 推送到远程
 git push -u origin feature/pet-health-check
@@ -70,7 +70,7 @@ git pull origin main
 git checkout -b hotfix/fix-login-error
 
 # 2. 修复并提交
-git commit -m "fix(auth): resolve login token validation error"
+git commit -m "fix(auth): 修复登录令牌验证错误"
 
 # 3. 合并到 main 和 develop
 git checkout main
@@ -99,18 +99,18 @@ git branch -d hotfix/fix-login-error
 
 ### Type 类型（必填）
 
-| Type       | 说明                         | 示例                                             |
-| ---------- | ---------------------------- | ------------------------------------------------ |
-| `feat`     | 新功能                       | feat(pet): add pet emotion analysis              |
-| `fix`      | Bug 修复                     | fix(api): resolve null pointer in user service   |
-| `docs`     | 文档更新                     | docs(readme): update installation guide          |
-| `style`    | 代码格式（不影响功能）       | style(component): fix indentation                |
-| `refactor` | 重构（不是新功能也不是修复） | refactor(auth): simplify token validation logic  |
-| `perf`     | 性能优化                     | perf(image): implement lazy loading              |
-| `test`     | 测试相关                     | test(user): add unit tests for user service      |
-| `chore`    | 构建/工具链变动              | chore(deps): upgrade nestjs to v11               |
-| `ci`       | CI/CD 配置                   | ci(github): add automated testing workflow       |
-| `revert`   | 回滚 commit                  | revert: revert "feat(pet): add emotion analysis" |
+| Type       | 说明                         | 示例                                       |
+| ---------- | ---------------------------- | ------------------------------------------ |
+| `feat`     | 新功能                       | feat(pet): 添加宠物情绪分析功能            |
+| `fix`      | Bug 修复                     | fix(api): 修复用户服务空指针异常           |
+| `docs`     | 文档更新                     | docs(readme): 更新安装指南                 |
+| `style`    | 代码格式（不影响功能）       | style(component): 修复代码缩进             |
+| `refactor` | 重构（不是新功能也不是修复） | refactor(auth): 简化令牌验证逻辑           |
+| `perf`     | 性能优化                     | perf(image): 实现图片懒加载                |
+| `test`     | 测试相关                     | test(user): 添加用户服务单元测试           |
+| `chore`    | 构建/工具链变动              | chore(deps): 升级 NestJS 到 v11            |
+| `ci`       | CI/CD 配置                   | ci(github): 添加自动化测试工作流           |
+| `revert`   | 回滚 commit                  | revert: 回滚 "feat(pet): 添加情绪分析功能" |
 
 ### Scope 范围（可选）
 
@@ -128,16 +128,24 @@ git branch -d hotfix/fix-login-error
 
 ### Subject 主题（必填）
 
+**重要：优先使用中文描述，英文亦可接受**
+
 ```bash
-# ✅ GOOD - 简洁、动词开头、小写、无句号
+# ✅ GOOD - 简洁、动词开头、无句号
+# 👍 推荐使用中文
+feat(pet): 添加宠物情绪识别接口
+fix(auth): 修复 JWT 令牌过期问题
+docs(api): 更新 Swagger 文档
+
+# ⚠️ 可接受 - 英文描述
 feat(pet): add emotion detection api
 fix(auth): resolve jwt token expiration issue
 docs(api): update swagger documentation
 
 # ❌ BAD - 不规范
-feat(pet): Added emotion detection API.  # 大写、有句号
-fix: bug fix  # 不够具体
-update code  # 缺少 type 和范围
+feat(pet): 添加宠物情绪识别接口。  # 有句号
+fix: 修复 bug  # 不够具体
+更新代码  # 缺少 type 和范围
 ```
 
 ### 完整示例
@@ -145,19 +153,19 @@ update code  # 缺少 type 和范围
 **简单提交**
 
 ```bash
-git commit -m "feat(pet): add pet profile creation"
-git commit -m "fix(upload): resolve image compression error"
-git commit -m "docs(readme): add setup instructions"
+git commit -m "feat(pet): 添加宠物档案创建功能"
+git commit -m "fix(upload): 修复图片压缩错误"
+git commit -m "docs(readme): 添加安装说明"
 ```
 
 **详细提交（带 body 和 footer）**
 
 ```bash
-git commit -m "feat(ai): implement pet emotion recognition
+git commit -m "feat(ai): 实现宠物情绪识别功能
 
-- Integrate Baidu AI API for emotion detection
-- Add confidence score calculation
-- Create emotion result card component
+- 集成百度 AI API 进行情绪检测
+- 添加置信度分数计算
+- 创建情绪结果卡片组件
 
 Closes #123"
 ```
@@ -165,10 +173,10 @@ Closes #123"
 **Breaking Change（破坏性更新）**
 
 ```bash
-git commit -m "feat(api)!: change user authentication endpoint
+git commit -m "feat(api)!: 修改用户认证端点
 
-BREAKING CHANGE: The /api/login endpoint has been replaced with /api/auth/login.
-All clients must update their API calls accordingly.
+BREAKING CHANGE: /api/login 端点已被 /api/auth/login 替代。
+所有客户端必须更新其 API 调用。
 
 Refs #456"
 ```
@@ -177,11 +185,11 @@ Refs #456"
 
 ### PR 标题格式
 
-使用与 commit message 相同的格式：
+使用与 commit message 相同的格式（必须使用中文）：
 
 ```
-feat(pet): add emotion detection feature
-fix(auth): resolve login token validation
+feat(pet): 添加情绪识别功能
+fix(auth): 修复登录令牌验证问题
 ```
 
 ### PR 描述模板
@@ -231,7 +239,7 @@ Closes #123
 ```bash
 # ✅ GOOD - 将多个 commit 压缩为一个
 git merge --squash feature/pet-emotion
-git commit -m "feat(pet): add emotion detection feature"
+git commit -m "feat(pet): 添加情绪识别功能"
 ```
 
 ### 保留 Commit 历史
@@ -249,7 +257,7 @@ git merge --no-ff release/v1.0.0
 
 ```bash
 # ✅ GOOD - 修改 commit message
-git commit --amend -m "feat(pet): add emotion detection api"
+git commit --amend -m "feat(pet): 添加情绪检测接口"
 
 # ✅ GOOD - 添加遗漏的文件
 git add forgotten-file.ts
@@ -263,9 +271,9 @@ git commit --amend --no-edit
 git rebase -i HEAD~3
 
 # 在编辑器中将 pick 改为 squash (s)
-pick abc123 feat(pet): add emotion service
-squash def456 feat(pet): add emotion types
-squash ghi789 feat(pet): update emotion tests
+pick abc123 feat(pet): 添加情绪服务
+squash def456 feat(pet): 添加情绪类型
+squash ghi789 feat(pet): 更新情绪测试
 ```
 
 ### 同步远程分支
@@ -318,12 +326,12 @@ git push --force origin develop  # 避免！
 
 ```bash
 # ✅ GOOD - 每个 commit 应该是独立的功能单元
-git commit -m "feat(pet): add pet model and repository"
-git commit -m "feat(pet): add pet service with CRUD operations"
-git commit -m "feat(pet): add pet controller and routes"
+git commit -m "feat(pet): 添加宠物模型和仓储层"
+git commit -m "feat(pet): 添加宠物服务及 CRUD 操作"
+git commit -m "feat(pet): 添加宠物控制器和路由"
 
 # ❌ BAD - 一次提交太多不相关的变更
-git commit -m "add pet feature, fix user bug, update readme"
+git commit -m "添加宠物功能，修复用户 bug，更新 readme"
 ```
 
 ## Git 配置建议
