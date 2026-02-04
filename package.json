@@ -7,7 +7,7 @@
     "prepare": "husky",
     "dev:backend": "pnpm --filter back-end start:dev",
     "dev:frontend": "pnpm --filter front-end start",
-    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "dev": "pnpm run dev:backend & pnpm run dev:frontend",
     "build:backend": "pnpm --filter back-end build",
     "build:frontend": "pnpm --filter front-end build",
     "build": "pnpm --filter back-end build && pnpm --filter front-end build",
@@ -21,7 +21,6 @@
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
-    "concurrently": "^9.1.2",
     "husky": "^9.0.0",
     "lint-staged": "^15.0.0"
   },
