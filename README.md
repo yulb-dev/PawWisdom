@@ -103,9 +103,10 @@ npm start
 - `chore`: 构建/工具
 - `ci`: CI/CD
 
-**Scope**:
+**Scope** (任意有意义的模块名，建议参考):
 
 - `pet`, `user`, `auth`, `community`, `health`, `ai`, `api`, `ui`, `db`, `deps`, `config`
+- 也可以使用自定义的 scope，如 `my-module`, `feature-name` 等
 
 **示例**:
 

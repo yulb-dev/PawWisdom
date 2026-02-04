@@ -61,6 +61,8 @@ git commit -m "feat(pet): add pet model"
 
 ### Scope（必填）
 
+可以使用任意有意义的模块名称，建议参考：
+
 | Scope | 说明 |
 |-------|------|
 | `pet` | 宠物相关功能 |
@@ -74,6 +76,9 @@ git commit -m "feat(pet): add pet model"
 | `db` | 数据库 |
 | `deps` | 依赖更新 |
 | `config` | 配置文件 |
+| 自定义 | 如 `my-module`, `feature-name` 等 |
+
+**注意**：scope 必须小写，可以使用连字符（如 `my-module`）
 
 ### Subject（必填）
 
@@ -99,7 +104,6 @@ git commit -m "Feat(pet): add feature"       # Type 不应大写
 git commit -m "feat(Pet): add feature"       # Scope 不应大写
 git commit -m "feat(pet): Add feature"       # Subject 不应大写开头
 git commit -m "feat(pet): add feature."      # Subject 不应以句号结尾
-git commit -m "feat(invalid): add feature"   # Scope 不在允许列表中
 ```
 
 ## 跳过 Hooks（不推荐）
