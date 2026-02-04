@@ -6,6 +6,26 @@ alwaysApply: false
 
 # React Native + Expo 前端开发规范
 
+## ⚠️ 重要：界面语言要求
+
+**本项目所有用户界面文本必须使用中文！**
+
+```typescript
+// ✅ GOOD - 使用中文
+<Text>欢迎回来！</Text>
+<Button title="登录" />
+Alert.alert('错误', '请填写所有字段')
+
+// ❌ BAD - 不使用英文
+<Text>Welcome Back!</Text>
+<Button title="Login" />
+Alert.alert('Error', 'Please fill in all fields')
+```
+
+详细规范请查看 `i18n-chinese.mdc` 规则文件。
+
+---
+
 ## 组件设计
 
 ### 函数组件和 Hooks
