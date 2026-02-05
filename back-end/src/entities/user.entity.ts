@@ -11,6 +11,12 @@ import {
 } from 'typeorm';
 import { Pet } from './pet.entity';
 
+export enum UserGender {
+  MALE = 'male',
+  FEMALE = 'female',
+  SECRET = 'secret',
+}
+
 @Entity('users')
 @Index(['email'])
 @Index(['phone'])
@@ -33,6 +39,28 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   avatarUrl?: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  backgroundUrl?: string;
+
+  @Column({ type: 'text', nullable: true })
+  signature?: string;
+
+  @Column({ type: 'date', nullable: true })
+  birthday?: Date;
+
+  @Column({
+    type: 'enum',
+    enum: UserGender,
+    default: UserGender.SECRET,
+  })
+  gender: UserGender;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  education?: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  occupation?: string;
+
   @Column({ type: 'boolean', default: false })
   isDeleted: boolean;
 
@@ -54,6 +82,15 @@ export class User {
     }
     if (this.phone) {
       this.phone = this.phone.trim();
+    }
+    if (this.signature) {
+      this.signature = this.signature.trim();
+    }
+    if (this.education) {
+      this.education = this.education.trim();
+    }
+    if (this.occupation) {
+      this.occupation = this.occupation.trim();
     }
   }
 }

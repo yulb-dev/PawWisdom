@@ -9,7 +9,14 @@ export interface UserProfile extends User {
 export interface UpdateUserData {
   username?: string
   phone?: string
+  email?: string
   avatarUrl?: string
+  backgroundUrl?: string
+  signature?: string
+  birthday?: string
+  gender?: 'male' | 'female' | 'secret'
+  education?: string
+  occupation?: string
 }
 
 class UserService {

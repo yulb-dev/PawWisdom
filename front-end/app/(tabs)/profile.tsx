@@ -185,9 +185,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.addPetButton}
-              onPress={() =>
-                router.push({ pathname: '/pets', params: { action: 'add' } })
-              }
+              onPress={() => router.push('/pets/edit')}
             >
               <Text style={styles.addPetText}>+</Text>
             </TouchableOpacity>

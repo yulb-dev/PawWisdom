@@ -133,7 +133,7 @@ export class UsersService {
     } catch (error) {
       const errorCode = (error as { code?: string }).code;
       if (errorCode === '23505') {
-        throw new ConflictException('Username or phone already exists');
+        throw new ConflictException('Username, email or phone already exists');
       }
       throw new InternalServerErrorException('Failed to update user');
     }

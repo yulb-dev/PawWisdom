@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-export type ProfileGender = 'male' | 'female' | 'unknown'
+export type ProfileGender = 'male' | 'female' | 'secret'
 
 interface ProfileState {
   username: string
@@ -28,7 +28,7 @@ export const useProfileStore = create<ProfileState>()(
       email: '',
       education: '',
       occupation: '',
-      gender: 'unknown',
+      gender: 'secret',
       avatarUri: null,
       backgroundUri: null,
       followers: 9868,
