@@ -30,11 +30,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="planet"
         options={{
-          title: '宠物',
+          title: '广场',
           tabBarIcon: ({ color, size }) => (
             <Image
               source={require('../../assets/icons/tabbar/planet.svg')}
-              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+              style={[styles.tabIcon, { width: size + 2, height: size + 2, tintColor: color }]}
             />
           )
         }}
@@ -70,7 +70,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Image
               source={require('../../assets/icons/tabbar/myself.svg')}
-              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+              style={[styles.tabIcon, { width: size + 2, height: size + 2, tintColor: color }]}
             />
           )
         }}
