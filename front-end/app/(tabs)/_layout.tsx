@@ -1,5 +1,6 @@
 import { Tabs, router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { StyleSheet } from 'react-native'
+import { Image } from 'expo-image'
 import { useAuthStore } from '../../store/auth.store'
 
 export default function TabLayout() {
@@ -8,9 +9,10 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#9ca3af',
-        headerShown: false
+        tabBarActiveTintColor: '#f96853',
+        tabBarInactiveTintColor: '#282828',
+        headerShown: false,
+        tabBarStyle: styles.tabBar
       }}
     >
       <Tabs.Screen
@@ -18,16 +20,46 @@ export default function TabLayout() {
         options={{
           title: '首页',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Image
+              source={require('../../assets/icons/tabbar/home.svg')}
+              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+            />
           )
         }}
       />
       <Tabs.Screen
-        name="pets"
+        name="planet"
         options={{
           title: '宠物',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="paw-outline" size={size} color={color} />
+            <Image
+              source={require('../../assets/icons/tabbar/planet.svg')}
+              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+            />
+          )
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: '发布',
+          tabBarIcon: ({ color, size }) => (
+            <Image
+              source={require('../../assets/icons/tabbar/create.svg')}
+              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+            />
+          )
+        }}
+      />
+      <Tabs.Screen
+        name="message"
+        options={{
+          title: '消息',
+          tabBarIcon: ({ color, size }) => (
+            <Image
+              source={require('../../assets/icons/tabbar/message.svg')}
+              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+            />
           )
         }}
       />
@@ -36,7 +68,10 @@ export default function TabLayout() {
         options={{
           title: '我的',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <Image
+              source={require('../../assets/icons/tabbar/myself.svg')}
+              style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+            />
           )
         }}
         listeners={{
@@ -51,3 +86,13 @@ export default function TabLayout() {
     </Tabs>
   )
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    borderTopColor: '#f1f1f1',
+    backgroundColor: '#ffffff'
+  },
+  tabIcon: {
+    resizeMode: 'contain'
+  }
+})

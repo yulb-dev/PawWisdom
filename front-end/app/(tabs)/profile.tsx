@@ -1,279 +1,384 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Animated,
+  Dimensions,
+  Pressable,
   ScrollView,
-  ActivityIndicator
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { useAuthStore } from '../../store/auth.store'
-import { userService, UserProfile } from '../../services/user.service'
-import { authService } from '../../services/auth.service'
 import { useDialog } from '../../components/ui/DialogProvider'
+import { useAuthStore } from '../../store/auth.store'
+import { useProfileStore } from '../../store/profile.store'
+import { petService, Pet } from '../../services/pet.service'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const DESIGN_WIDTH = 375
+const scale = (size: number) => (SCREEN_WIDTH / DESIGN_WIDTH) * size
+const fontSize = (size: number) => Math.max(12, Math.round(scale(size)))
+const DRAWER_WIDTH = SCREEN_WIDTH * 0.72
 
 export default function ProfileScreen() {
-  const { logout, isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const { showDialog } = useDialog()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const profile = useProfileStore()
+  const [pets, setPets] = useState<Pet[]>([])
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const drawerTranslateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setProfile(null)
-      setLoading(false)
       router.replace('/auth/login')
       return
     }
-    loadProfile()
+    loadPets()
   }, [isAuthenticated])
 
-  const loadProfile = async () => {
+  const loadPets = async () => {
     try {
-      const data = await userService.getProfile()
-      setProfile(data)
+      const data = await petService.getMyPets()
+      setPets(data)
     } catch (error) {
-      showDialog({ title: '错误', message: '加载个人资料失败' })
-    } finally {
-      setLoading(false)
+      showDialog({ title: '错误', message: '加载宠物档案失败' })
     }
   }
 
-  const handleLogout = async () => {
-    const performLogout = async () => {
-      try {
-        await authService.logout()
-        logout()
-        router.replace('/')
-      } catch (error) {
-        showDialog({ title: '错误', message: '退出登录失败，请稍后重试' })
-      }
-    }
+  const openDrawer = () => {
+    setDrawerVisible(true)
+    Animated.timing(drawerTranslateX, {
+      toValue: 0,
+      duration: 220,
+      useNativeDriver: true
+    }).start()
+  }
 
-    showDialog({
-      title: '退出登录',
-      message: '确定要退出登录吗？',
-      confirmText: '退出',
-      cancelText: '取消',
-      showCancel: true,
-      onConfirm: performLogout
+  const closeDrawer = () => {
+    Animated.timing(drawerTranslateX, {
+      toValue: -DRAWER_WIDTH,
+      duration: 220,
+      useNativeDriver: true
+    }).start(() => {
+      setDrawerVisible(false)
     })
   }
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#6366f1" />
-        </View>
-      </SafeAreaView>
-    )
-  }
+  const displayName = profile.username || user?.username || '用户'
+  const signature = profile.signature || '还没有设置个人主页签名'
+  const avatarSource = profile.avatarUri
+    ? { uri: profile.avatarUri }
+    : require('../../assets/images/default_avatar.webp')
+  const backgroundSource = profile.backgroundUri
+    ? { uri: profile.backgroundUri }
+    : require('../../assets/images/default_background.jpg')
+
+  const topPets = useMemo(() => pets.slice(0, 2), [pets])
 
   if (!isAuthenticated) {
     return null
   }
 
+  const HEADER_HEIGHT = SCREEN_WIDTH * 0.65 + insets.top
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.headerCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {profile?.username?.charAt(0).toUpperCase() || '?'}
-            </Text>
+    <View style={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollBody}
+      >
+        <View style={styles.headerWrap}>
+          <Image
+            source={backgroundSource}
+            style={styles.headerImage}
+            contentFit="cover"
+          />
+          <View style={styles.headerOverlay} />
+          <View style={[styles.headerActions, { paddingTop: insets.top + 8 }]}>
+            <TouchableOpacity style={styles.iconButton} onPress={openDrawer}>
+              <Image
+                source={require('../../assets/icons/more_menu.svg')}
+                style={styles.iconImage}
+              />
+            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => router.push('/profile/edit')}
+              >
+                <Image
+                  source={require('../../assets/icons/edit.svg')}
+                  style={styles.iconImage}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => router.push('/scan')}
+              >
+                <Image
+                  source={require('../../assets/icons/scan_qr.svg')}
+                  style={styles.iconImage}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => router.push('/settings')}
+              >
+                <Image
+                  source={require('../../assets/icons/setup.svg')}
+                  style={styles.iconImage}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.username}>{profile?.username}</Text>
-          <Text style={styles.email}>{profile?.email}</Text>
         </View>
 
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>我的宠物</Text>
-          {profile?.pets && profile.pets.length > 0 ? (
-            profile.pets.map((pet) => (
-              <View key={pet.id} style={styles.petCard}>
-                <View style={styles.petInfo}>
-                  <Text style={styles.petName}>{pet.name}</Text>
-                  <Text style={styles.petDetails}>
-                    {pet.species === 'cat' ? '猫' : pet.species === 'dog' ? '狗' : '其他'}{' '}
-                    • {pet.breed || '未知品种'}
-                  </Text>
+        <View style={styles.profileCard}>
+          <View style={styles.profileRow}>
+            <View style={styles.profileTextBlock}>
+              <Text style={styles.profileName}>{displayName}</Text>
+              <View style={styles.statRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{profile.followers}</Text>
+                  <Text style={styles.statLabel}>粉丝</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{profile.following}</Text>
+                  <Text style={styles.statLabel}>关注</Text>
                 </View>
               </View>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>还没有宠物，快去添加第一只吧！</Text>
-          )}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/(tabs)/pets')}
-          >
-            <Text style={styles.addButtonText}>添加宠物</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>账号信息</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>用户名</Text>
-            <Text style={styles.infoValue}>{profile?.username}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>邮箱</Text>
-            <Text style={styles.infoValue}>{profile?.email}</Text>
-          </View>
-          {profile?.phone && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>手机</Text>
-              <Text style={styles.infoValue}>{profile.phone}</Text>
+              <Text style={styles.signatureText}>{signature}</Text>
             </View>
-          )}
+            <View style={styles.avatarWrap}>
+              <Image source={avatarSource} style={styles.avatar} contentFit="cover" />
+            </View>
+          </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>退出登录</Text>
-        </TouchableOpacity>
+        <View style={styles.petCard}>
+          <Text style={styles.petTitle}>宠物档案</Text>
+          <View style={styles.petRight}>
+            <TouchableOpacity
+              style={styles.petStack}
+              onPress={() => router.push({ pathname: '/pets' })}
+            >
+              {topPets.map((pet, index) => (
+                <View
+                  key={pet.id}
+                  style={[styles.petAvatarWrap, { marginLeft: index === 0 ? 0 : -12 }]}
+                >
+                  <Image
+                    source={
+                      pet.avatarUrl
+                        ? { uri: pet.avatarUrl }
+                        : require('../../assets/images/default_avatar.webp')
+                    }
+                    style={styles.petAvatar}
+                    contentFit="cover"
+                  />
+                </View>
+              ))}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addPetButton}
+              onPress={() =>
+                router.push({ pathname: '/pets', params: { action: 'add' } })
+              }
+            >
+              <Text style={styles.addPetText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {drawerVisible && (
+        <View style={styles.drawerOverlay} pointerEvents="box-none">
+          <Pressable style={styles.drawerBackdrop} onPress={closeDrawer} />
+          <Animated.View
+            style={[styles.drawer, { transform: [{ translateX: drawerTranslateX }] }]}
+          >
+            <View style={styles.drawerContent} />
+          </Animated.View>
+        </View>
+      )}
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f5f6fb'
-  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fb',
-    padding: 16
+    backgroundColor: 'white'
   },
-  centerContainer: {
+  scrollBody: {
+    paddingBottom: 24
+  },
+  headerWrap: {
+    width: '100%',
+    position: 'relative'
+  },
+  headerImage: {
+    width: '100%',
+    height: 200
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)'
+  },
+  headerActions: {
+    position: 'absolute',
+    top: 0,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  iconImage: {
+    width: 24,
+    height: 24,
+    tintColor: '#ffffff'
+  },
+  profileCard: {
+    marginHorizontal: 20,
+    backgroundColor: '#ffffff',
+    paddingVertical: 20
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between'
+  },
+  profileTextBlock: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb'
+    paddingRight: 12
   },
-  headerCard: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    marginBottom: 16,
-    shadowColor: '#111827',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#4F46E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15
-  },
-  avatarText: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#fff'
-  },
-  username: {
-    fontSize: 20,
+  profileName: {
+    fontSize: fontSize(20),
     fontWeight: '600',
-    color: '#111827',
-    marginBottom: 6
-  },
-  email: {
-    fontSize: 14,
-    color: '#6b7280'
-  },
-  sectionCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 16,
-    shadowColor: '#111827',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05,
-    shadowRadius: 14,
-    elevation: 3
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    color: '#111111',
     marginBottom: 12
   },
+  statRow: {
+    flexDirection: 'row',
+    gap: 24,
+    marginBottom: 16
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4
+  },
+  statValue: {
+    fontSize: fontSize(15),
+    fontWeight: '500',
+    color: '#111111'
+  },
+  statLabel: {
+    fontSize: fontSize(14),
+    color: '#999999'
+  },
+  signatureText: {
+    fontSize: fontSize(14),
+    color: '#666666',
+    lineHeight: 20
+  },
+  avatarWrap: {
+    width: scale(110),
+    height: scale(110),
+    borderRadius: scale(55),
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    overflow: 'hidden',
+    transform: [{ translateY: -50 }]
+  },
+  avatar: {
+    width: '100%',
+    height: '100%'
+  },
   petCard: {
+    marginTop: 10,
+    marginHorizontal: 20,
+    backgroundColor: '#ffffff',
+    paddingVertical: 8,
+    paddingHorizontal: 0
+  },
+  petTitle: {
+    fontSize: fontSize(16),
+    color: '#111111',
+    fontWeight: '500',
+    marginBottom: 8
+  },
+  petRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    backgroundColor: '#f9fafb',
-    borderRadius: 14,
-    marginBottom: 10
+    gap: 12
   },
-  petInfo: {
+  petStack: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  petAvatarWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  petAvatar: {
+    width: '100%',
+    height: '100%'
+  },
+  addPetButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#dddddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff'
+  },
+  addPetText: {
+    fontSize: 22,
+    fontWeight: '400',
+    color: '#999999'
+  },
+  drawerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row'
+  },
+  drawerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)'
+  },
+  drawer: {
+    width: DRAWER_WIDTH,
+    backgroundColor: '#ffffff',
+    height: '100%'
+  },
+  drawerContent: {
     flex: 1
-  },
-  petName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4
-  },
-  petDetails: {
-    fontSize: 14,
-    color: '#6b7280'
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#9ca3af',
-    textAlign: 'center',
-    paddingVertical: 16
-  },
-  addButton: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 8
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600'
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#6b7280'
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#111827',
-    fontWeight: '600'
-  },
-  logoutButton: {
-    backgroundColor: '#ef4444',
-    paddingVertical: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 24
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600'
   }
 })

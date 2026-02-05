@@ -30,11 +30,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f6fb'
+    backgroundColor: '#f8f9fa'
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fb',
+    backgroundColor: '#f8f9fa',
     padding: 20
   },
   header: {
@@ -62,14 +62,14 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#111827',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 4
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3
   },
   cardTitle: {
     fontSize: 16,

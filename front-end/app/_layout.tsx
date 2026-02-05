@@ -13,6 +13,9 @@ export default function RootLayout() {
           <Stack.Screen name="auth/register" />
           <Stack.Screen name="auth/verify" />
           <Stack.Screen name="auth/reset-password" />
+          <Stack.Screen name="profile/edit" />
+          <Stack.Screen name="scan" />
+          <Stack.Screen name="settings" />
           <Stack.Screen name="(tabs)" />
         </Stack>
       </DialogProvider>

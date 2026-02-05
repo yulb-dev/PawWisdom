@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useMemo, useState } from 'react'
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type DialogOptions = {
   title: string
@@ -20,6 +21,7 @@ const DialogContext = createContext<DialogContextValue | null>(null)
 export function DialogProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false)
   const [options, setOptions] = useState<DialogOptions | null>(null)
+  const insets = useSafeAreaInsets()
 
   const showDialog = (nextOptions: DialogOptions) => {
     setOptions({
@@ -50,8 +52,24 @@ export function DialogProvider({ children }: { children: ReactNode }) {
   return (
     <DialogContext.Provider value={contextValue}>
       {children}
-      <Modal visible={visible} transparent animationType="fade">
-        <View style={styles.overlay}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="overFullScreen"
+      >
+        <View
+          style={[
+            styles.overlay,
+            {
+              paddingTop: 24 + insets.top,
+              paddingBottom: 24 + insets.bottom,
+              paddingLeft: 24 + insets.left,
+              paddingRight: 24 + insets.right
+            }
+          ]}
+        >
           <View style={styles.card}>
             <Text style={styles.title}>{options?.title}</Text>
             {!!options?.message && <Text style={styles.message}>{options.message}</Text>}
@@ -82,11 +100,11 @@ export function useDialog() {
 
 const styles = StyleSheet.create({
   overlay: {
+    ...StyleSheet.absoluteFillObject,
     flex: 1,
     backgroundColor: 'rgba(17, 24, 39, 0.2)',
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24
+    alignItems: 'center'
   },
   card: {
     width: '100%',
@@ -97,7 +115,7 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 28,
     elevation: 20
   },
