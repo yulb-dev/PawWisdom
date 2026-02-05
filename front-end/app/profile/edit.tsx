@@ -15,6 +15,7 @@ import { useDialog } from '../../components/ui/DialogProvider'
 import { useProfileStore, ProfileGender } from '../../store/profile.store'
 import { pickAndSaveImage } from '../../utils/image-picker'
 import { userService } from '../../services/user.service'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function ProfileEditScreen() {
   const { showDialog } = useDialog()
@@ -141,13 +142,13 @@ export default function ProfileEditScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 5 }]}>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="chevron-back" size={22} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>个人信息</Text>
         <TouchableOpacity
@@ -181,9 +182,6 @@ export default function ProfileEditScreen() {
               </View>
             </View>
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
           <TouchableOpacity
             style={styles.row}
             onPress={() => openFieldEditor('username', username)}
@@ -201,7 +199,9 @@ export default function ProfileEditScreen() {
               {signature || '请设置个性签名'}
             </Text>
           </TouchableOpacity>
+        </View>
 
+        <View style={styles.section}>
           <TouchableOpacity style={styles.row} onPress={() => {}}>
             <Text style={styles.rowLabel}>性别</Text>
             <Text style={styles.rowValue}>{genderMap[gender]}</Text>
@@ -296,21 +296,19 @@ export default function ProfileEditScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#f6f8fa'
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#e5e5e5'
+    paddingBottom: 4
   },
   headerButton: {
     paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 0,
     minWidth: 44
   },
   backText: {
@@ -332,32 +330,31 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scrollContent: {
-    paddingTop: 20,
+    paddingTop: 12,
     paddingBottom: 40
   },
   section: {
     backgroundColor: '#ffffff',
-    marginBottom: 12
+    marginHorizontal: 12,
+    marginBottom: 12,
+    borderRadius: 8
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#f0f0f0'
+    padding: 16
   },
   rowLast: {
     borderBottomWidth: 0
   },
   rowLabel: {
-    fontSize: 16,
-    color: '#111111',
-    fontWeight: '400'
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '500'
   },
   rowValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#999999',
     maxWidth: '60%',
     textAlign: 'right'

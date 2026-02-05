@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import { useDialog } from '../components/ui/DialogProvider'
 import { useAuthStore } from '../store/auth.store'
 import { authService } from '../services/auth.service'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function SettingsScreen() {
   const { showDialog } = useDialog()
@@ -56,16 +57,15 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 5 }]}>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="chevron-back" size={22} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>设置</Text>
-        <View style={styles.headerButton} />
       </View>
 
       <ScrollView
@@ -117,21 +117,19 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#f6f8fa'
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#e5e5e5'
+    paddingBottom: 4
   },
   headerButton: {
     paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 0,
     minWidth: 44
   },
   backText: {
@@ -147,26 +145,25 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scrollContent: {
-    paddingTop: 20,
+    paddingTop: 12,
     paddingBottom: 40
   },
   section: {
     backgroundColor: '#ffffff',
-    marginBottom: 12
+    marginHorizontal: 12,
+    marginBottom: 12,
+    borderRadius: 8
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#f0f0f0'
+    padding: 16
   },
   rowLabel: {
-    fontSize: 16,
-    color: '#111111',
-    fontWeight: '400'
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '500'
   },
   rowRight: {
     flexDirection: 'row',
