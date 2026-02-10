@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     elevation: 20
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 12

@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useAuthStore } from '../../store/auth.store'
+import { useProfileStore } from '../../store/profile.store'
 import { authService } from '../../services/auth.service'
 import {
   VerificationCodeInput,
@@ -15,18 +16,28 @@ const CODE_LENGTH = 4
 const TEST_CODE = '0000'
 
 export default function VerifyCode() {
+  const { type } = useLocalSearchParams<{ type?: string }>()
+  const verifyType = (type || 'email') as 'email' | 'phone'
   const { pendingRegister, setUser, setToken, setPendingRegister } = useAuthStore()
+  const resetProfile = useProfileStore((state) => state.resetProfile)
   const { showDialog } = useDialog()
   const [code, setCode] = useState('')
 
-  const maskedEmail = useMemo(() => {
-    if (!pendingRegister?.email) {
+  const maskedIdentifier = useMemo(() => {
+    if (!pendingRegister?.email && !pendingRegister?.phone) {
       return ''
     }
-    const [name, domain] = pendingRegister.email.split('@')
-    const safeName = name.length > 2 ? `${name.slice(0, 2)}***` : `${name}***`
-    return `${safeName}@${domain || ''}`
-  }, [pendingRegister?.email])
+    if (verifyType === 'email' && pendingRegister?.email) {
+      const [name, domain] = pendingRegister.email.split('@')
+      const safeName = name.length > 2 ? `${name.slice(0, 2)}***` : `${name}***`
+      return `${safeName}@${domain || ''}`
+    }
+    if (verifyType === 'phone' && pendingRegister?.phone) {
+      const phone = pendingRegister.phone
+      return `${phone.slice(0, 3)}****${phone.slice(-4)}`
+    }
+    return ''
+  }, [pendingRegister, verifyType])
 
   const handlePressNumber = (value: string) => {
     if (code.length >= CODE_LENGTH) {
@@ -62,6 +73,7 @@ export default function VerifyCode() {
       setUser(response.user)
       setToken(response.token)
       setPendingRegister(null)
+      resetProfile()
       router.replace('/(tabs)/profile')
     } catch (error: any) {
       showDialog({
@@ -80,7 +92,8 @@ export default function VerifyCode() {
 
         <Text style={styles.title}>验证码</Text>
         <Text style={styles.subtitle}>
-          请输入发送到 {maskedEmail || '您的邮箱'} 的验证码
+          请输入发送到 {maskedIdentifier || (verifyType === 'email' ? '您的邮箱' : '您的手机号')}{' '}
+          的验证码
         </Text>
 
         <View style={styles.verifyLayout}>

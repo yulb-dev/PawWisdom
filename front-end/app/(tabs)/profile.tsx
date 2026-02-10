@@ -68,8 +68,8 @@ export default function ProfileScreen() {
     })
   }
 
-  const displayName = profile.username || user?.username || '用户'
-  const signature = profile.signature || '还没有设置个人主页签名'
+  const displayName = profile.username || user?.nickname || '用户'
+  const signature = profile.signature || '添加点介绍吧...'
   const avatarSource = profile.avatarUri
     ? { uri: profile.avatarUri }
     : require('../../assets/images/default_avatar.webp')

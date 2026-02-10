@@ -3,14 +3,14 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
 } from 'class-validator';
 
 export class CreateUserDto {
   @IsOptional()
   @IsString()
-  @MinLength(3)
-  username?: string;
+  nickname?: string;
 
   @IsNotEmpty()
   @IsEmail()
@@ -22,10 +22,19 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, {
+    message: '密码需包含大小写字母和数字，且至少8位',
+  })
   password: string;
 
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  wechatOpenId?: string;
+
+  username?: string;
 }

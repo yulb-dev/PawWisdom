@@ -1,14 +1,18 @@
 import { create } from 'zustand'
 import { RegisterData, User } from '../services/auth.service'
 
+interface PendingRegisterData extends RegisterData {
+  phone?: string
+}
+
 interface AuthState {
   user: User | null
   token: string | null
   isAuthenticated: boolean
-  pendingRegister: RegisterData | null
+  pendingRegister: PendingRegisterData | null
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
-  setPendingRegister: (data: RegisterData | null) => void
+  setPendingRegister: (data: PendingRegisterData | null) => void
   logout: () => void
 }
 

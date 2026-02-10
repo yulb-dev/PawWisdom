@@ -8,10 +8,18 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   username VARCHAR(50) UNIQUE NOT NULL,
+  nickname VARCHAR(50),
   email VARCHAR(100) UNIQUE NOT NULL,
   phone VARCHAR(20) UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   avatar_url VARCHAR(255),
+  background_url VARCHAR(255),
+  wechat_open_id VARCHAR(64) UNIQUE,
+  signature TEXT,
+  birthday DATE,
+  gender VARCHAR(20) DEFAULT 'secret' CHECK (gender IN ('male', 'female', 'secret')),
+  education VARCHAR(50),
+  occupation VARCHAR(50),
   is_deleted BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -47,6 +55,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
+CREATE INDEX IF NOT EXISTS idx_users_wechat_open_id ON users(wechat_open_id);
 CREATE INDEX IF NOT EXISTS idx_pets_owner_id ON pets(owner_id);
 CREATE INDEX IF NOT EXISTS idx_pets_species ON pets(species);
 CREATE INDEX IF NOT EXISTS idx_pets_owner_deleted ON pets(owner_id, is_deleted);

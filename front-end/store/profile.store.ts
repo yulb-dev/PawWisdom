@@ -4,6 +4,20 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 export type ProfileGender = 'male' | 'female' | 'secret'
 
+const defaultProfile = {
+  username: '',
+  signature: '',
+  birthday: '',
+  email: '',
+  education: '',
+  occupation: '',
+  gender: 'secret' as ProfileGender,
+  avatarUri: null,
+  backgroundUri: null,
+  followers: 9868,
+  following: 786
+}
+
 interface ProfileState {
   username: string
   signature: string
@@ -16,24 +30,18 @@ interface ProfileState {
   backgroundUri: string | null
   followers: number
   following: number
-  updateProfile: (data: Partial<Omit<ProfileState, 'updateProfile'>>) => void
+  updateProfile: (
+    data: Partial<Omit<ProfileState, 'updateProfile' | 'resetProfile'>>
+  ) => void
+  resetProfile: () => void
 }
 
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set) => ({
-      username: 'Kate Winslet',
-      signature: '狗是唯一会爱你胜过你爱它的动物',
-      birthday: '',
-      email: '',
-      education: '',
-      occupation: '',
-      gender: 'secret',
-      avatarUri: null,
-      backgroundUri: null,
-      followers: 9868,
-      following: 786,
-      updateProfile: (data) => set((state) => ({ ...state, ...data }))
+      ...defaultProfile,
+      updateProfile: (data) => set((state) => ({ ...state, ...data })),
+      resetProfile: () => set({ ...defaultProfile })
     }),
     {
       name: 'pawwisdom-profile',

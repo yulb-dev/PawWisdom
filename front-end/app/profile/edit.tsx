@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { useDialog } from '../../components/ui/DialogProvider'
+import { useAuthStore } from '../../store/auth.store'
 import { useProfileStore, ProfileGender } from '../../store/profile.store'
 import { pickAndSaveImage } from '../../utils/image-picker'
 import { userService } from '../../services/user.service'
@@ -23,9 +25,10 @@ import { Ionicons } from '@expo/vector-icons'
 export default function ProfileEditScreen() {
   const { showDialog } = useDialog()
   const profile = useProfileStore()
+  const { user } = useAuthStore()
   const insets = useSafeAreaInsets()
-  const [username, setUsername] = useState(profile.username)
-  const [signature, setSignature] = useState(profile.signature)
+  const [nickname, setNickname] = useState(() => profile.username || user?.nickname || '')
+  const [signature, setSignature] = useState(profile.signature || '')
   const [birthday, setBirthday] = useState(profile.birthday)
   const [email, setEmail] = useState(profile.email || '')
   const [education, setEducation] = useState(profile.education || '')
@@ -40,8 +43,6 @@ export default function ProfileEditScreen() {
   const [avatarUri, setAvatarUri] = useState<string | null>(profile.avatarUri)
   const [backgroundUri, setBackgroundUri] = useState<string | null>(profile.backgroundUri)
 
-  const [editingField, setEditingField] = useState<'username' | 'signature' | null>(null)
-  const [tempValue, setTempValue] = useState('')
   const [saving, setSaving] = useState(false)
   const [genderPickerVisible, setGenderPickerVisible] = useState(false)
   const [educationPickerVisible, setEducationPickerVisible] = useState(false)
@@ -94,36 +95,20 @@ export default function ProfileEditScreen() {
     }
   }
 
-  const openFieldEditor = (field: 'username' | 'signature', currentValue: string) => {
-    setEditingField(field)
-    setTempValue(currentValue)
-  }
-
-  const closeFieldEditor = () => {
-    setEditingField(null)
-    setTempValue('')
-  }
-
-  const saveFieldValue = () => {
-    if (!editingField) return
-
-    switch (editingField) {
-      case 'username':
-        setUsername(tempValue)
-        break
-      case 'signature':
-        setSignature(tempValue)
-        break
-    }
-    closeFieldEditor()
-  }
-
   const formatBirthday = (date: Date) => date.toISOString().slice(0, 10)
 
   const handleSave = async () => {
-    if (!username.trim()) {
+    if (!nickname.trim()) {
       showDialog({ title: '错误', message: '请输入昵称' })
       return
+    }
+
+    if (email.trim()) {
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+      if (!emailRegex.test(email.trim())) {
+        showDialog({ title: '错误', message: '请输入有效的邮箱地址' })
+        return
+      }
     }
 
     if (saving) {
@@ -133,7 +118,7 @@ export default function ProfileEditScreen() {
     setSaving(true)
 
     profile.updateProfile({
-      username: username.trim(),
+      username: nickname.trim(),
       signature: signature.trim(),
       birthday: birthday.trim(),
       email: email.trim(),
@@ -146,7 +131,7 @@ export default function ProfileEditScreen() {
 
     try {
       await userService.updateProfile({
-        username: username.trim(),
+        nickname: nickname.trim(),
         email: email.trim() || undefined,
         avatarUrl: avatarUri || undefined,
         backgroundUrl: backgroundUri || undefined,
@@ -202,165 +187,140 @@ export default function ProfileEditScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 64 : 0}
       >
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.row} onPress={handlePickAvatar}>
-            <Text style={styles.rowLabel}>头像与头像框</Text>
-            <View style={styles.rowRight}>
-              <View style={styles.avatarSmall}>
-                <Image
-                  source={
-                    avatarUri
-                      ? { uri: avatarUri }
-                      : require('../../assets/images/default_avatar.webp')
-                  }
-                  style={styles.avatarImage}
-                  contentFit="cover"
-                />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={styles.section}>
+            <TouchableOpacity style={styles.row} onPress={handlePickAvatar}>
+              <Text style={styles.rowLabel}>头像与头像框</Text>
+              <View style={styles.rowRight}>
+                <View style={styles.avatarSmall}>
+                  <Image
+                    source={
+                      avatarUri
+                        ? { uri: avatarUri }
+                        : require('../../assets/images/default_avatar.webp')
+                    }
+                    style={styles.avatarImage}
+                    contentFit="cover"
+                  />
+                </View>
               </View>
+            </TouchableOpacity>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>昵称</Text>
+              <TextInput
+                style={styles.rowInput}
+                value={nickname}
+                onChangeText={setNickname}
+                placeholder="请设置昵称"
+                placeholderTextColor="#c0c4cc"
+              />
             </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => openFieldEditor('username', username)}
-          >
-            <Text style={styles.rowLabel}>昵称</Text>
-            <Text style={styles.rowValue}>{username || '请设置昵称'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => openFieldEditor('signature', signature)}
-          >
-            <Text style={styles.rowLabel}>个性签名</Text>
-            <Text style={styles.rowValue} numberOfLines={1}>
-              {signature || '请设置个性签名'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.row} onPress={handlePickBackground}>
-            <Text style={styles.rowLabel}>背景图</Text>
-            <View style={styles.rowRight}>
-              <View style={styles.backgroundPreview}>
-                <Image
-                  source={
-                    backgroundUri
-                      ? { uri: backgroundUri }
-                      : require('../../assets/images/default_background.jpg')
-                  }
-                  style={styles.backgroundPreviewImage}
-                  contentFit="cover"
-                />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>爪印号</Text>
+              <Text style={styles.rowValue}>{user?.username || '--'}</Text>
+            </View>
+            <View style={[styles.row, styles.rowMultiline]}>
+              <Text style={styles.rowLabel}>个性签名</Text>
+              <TextInput
+                style={[styles.rowInput, styles.rowInputMultiline]}
+                value={signature}
+                onChangeText={setSignature}
+                placeholder="添加点介绍吧..."
+                placeholderTextColor="#c0c4cc"
+                multiline
+              />
+            </View>
+            <TouchableOpacity style={styles.row} onPress={handlePickBackground}>
+              <Text style={styles.rowLabel}>背景图</Text>
+              <View style={styles.rowRight}>
+                <View style={styles.backgroundPreview}>
+                  <Image
+                    source={
+                      backgroundUri
+                        ? { uri: backgroundUri }
+                        : require('../../assets/images/default_background.jpg')
+                    }
+                    style={styles.backgroundPreviewImage}
+                    contentFit="cover"
+                  />
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => setGenderPickerVisible(true)}
-          >
-            <Text style={styles.rowLabel}>性别</Text>
-            <Text style={styles.rowValue}>{genderMap[gender]}</Text>
-          </TouchableOpacity>
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => setGenderPickerVisible(true)}
+            >
+              <Text style={styles.rowLabel}>性别</Text>
+              <Text style={styles.rowValue}>{genderMap[gender]}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => {
-              setBirthdayDraft(() => {
-                if (birthday) {
-                  const parsed = new Date(birthday)
-                  if (!Number.isNaN(parsed.getTime())) {
-                    return parsed
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => {
+                setBirthdayDraft(() => {
+                  if (birthday) {
+                    const parsed = new Date(birthday)
+                    if (!Number.isNaN(parsed.getTime())) {
+                      return parsed
+                    }
                   }
-                }
-                return new Date()
-              })
-              setBirthdayPickerVisible(true)
-            }}
-          >
-            <Text style={styles.rowLabel}>生日</Text>
-            <Text style={styles.rowValue}>{birthday || '请设置生日'}</Text>
-          </TouchableOpacity>
+                  return new Date()
+                })
+                setBirthdayPickerVisible(true)
+              }}
+            >
+              <Text style={styles.rowLabel}>生日</Text>
+              <Text style={styles.rowValue}>{birthday || '请设置生日'}</Text>
+            </TouchableOpacity>
 
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>邮箱</Text>
-            <TextInput
-              style={styles.rowInput}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="请设置邮箱"
-              placeholderTextColor="#c0c4cc"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>邮箱</Text>
+              <TextInput
+                style={styles.rowInput}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="请设置邮箱"
+                placeholderTextColor="#c0c4cc"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => setEducationPickerVisible(true)}
-          >
-            <Text style={styles.rowLabel}>教育经历</Text>
-            <Text style={styles.rowValue}>{education || '请设置教育经历'}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => setEducationPickerVisible(true)}
+            >
+              <Text style={styles.rowLabel}>教育经历</Text>
+              <Text style={styles.rowValue}>{education || '请设置教育经历'}</Text>
+            </TouchableOpacity>
 
-          <View style={[styles.row, styles.rowLast]}>
-            <Text style={styles.rowLabel}>职业</Text>
-            <TextInput
-              style={styles.rowInput}
-              value={occupation}
-              onChangeText={setOccupation}
-              placeholder="请设置职业"
-              placeholderTextColor="#c0c4cc"
-            />
-          </View>
-        </View>
-      </ScrollView>
-
-      <Modal
-        visible={editingField !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={closeFieldEditor}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingField === 'username' && '编辑昵称'}
-              {editingField === 'signature' && '编辑个性签名'}
-            </Text>
-            <TextInput
-              style={[
-                styles.modalInput,
-                editingField === 'signature' && styles.modalInputMultiline
-              ]}
-              value={tempValue}
-              onChangeText={setTempValue}
-              placeholder={editingField === 'username' ? '请输入昵称' : '请输入个性签名'}
-              multiline={editingField === 'signature'}
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={closeFieldEditor}
-              >
-                <Text style={styles.modalButtonTextCancel}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={saveFieldValue}
-              >
-                <Text style={styles.modalButtonTextConfirm}>确定</Text>
-              </TouchableOpacity>
+            <View style={[styles.row, styles.rowLast]}>
+              <Text style={styles.rowLabel}>职业</Text>
+              <TextInput
+                style={styles.rowInput}
+                value={occupation}
+                onChangeText={setOccupation}
+                placeholder="请设置职业"
+                placeholderTextColor="#c0c4cc"
+              />
             </View>
           </View>
-        </View>
-      </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={genderPickerVisible}
@@ -371,18 +331,22 @@ export default function ProfileEditScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.pickerContent}>
             <Text style={styles.modalTitle}>选择性别</Text>
-            {genderOptions.map((item) => (
-              <TouchableOpacity
-                key={item.value}
-                style={styles.pickerItem}
-                onPress={() => {
-                  setGender(item.value)
-                  setGenderPickerVisible(false)
-                }}
-              >
-                <Text style={styles.pickerItemText}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.pickerList}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {genderOptions.map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={styles.pickerItem}
+                    onPress={() => {
+                      setGender(item.value)
+                      setGenderPickerVisible(false)
+                    }}
+                  >
+                    <Text style={styles.pickerItemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonCancel]}
               onPress={() => setGenderPickerVisible(false)}
@@ -424,45 +388,61 @@ export default function ProfileEditScreen() {
         </View>
       </Modal>
 
-      <Modal
-        visible={birthdayPickerVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setBirthdayPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.pickerContent}>
-            <Text style={styles.modalTitle}>选择生日</Text>
-            <DateTimePicker
-              value={birthdayDraft}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(_, selectedDate) => {
-                if (selectedDate) {
-                  setBirthdayDraft(selectedDate)
-                }
-              }}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setBirthdayPickerVisible(false)}
-              >
-                <Text style={styles.modalButtonTextCancel}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={() => {
-                  setBirthday(formatBirthday(birthdayDraft))
-                  setBirthdayPickerVisible(false)
+      {Platform.OS === 'ios' && (
+        <Modal
+          visible={birthdayPickerVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setBirthdayPickerVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerContent}>
+              <Text style={styles.modalTitle}>选择生日</Text>
+              <DateTimePicker
+                value={birthdayDraft}
+                mode="date"
+                display="spinner"
+                onChange={(_, selectedDate) => {
+                  if (selectedDate) {
+                    setBirthdayDraft(selectedDate)
+                  }
                 }}
-              >
-                <Text style={styles.modalButtonTextConfirm}>确定</Text>
-              </TouchableOpacity>
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => setBirthdayPickerVisible(false)}
+                >
+                  <Text style={styles.modalButtonTextCancel}>取消</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={() => {
+                    setBirthday(formatBirthday(birthdayDraft))
+                    setBirthdayPickerVisible(false)
+                  }}
+                >
+                  <Text style={styles.modalButtonTextConfirm}>确定</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
+
+      {Platform.OS !== 'ios' && birthdayPickerVisible && (
+        <DateTimePicker
+          value={birthdayDraft}
+          mode="date"
+          display="default"
+          onChange={(_, selectedDate) => {
+            setBirthdayPickerVisible(false)
+            if (selectedDate) {
+              setBirthday(formatBirthday(selectedDate))
+            }
+          }}
+        />
+      )}
     </View>
   )
 }
@@ -471,6 +451,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f6f8fa'
+  },
+  keyboardAvoiding: {
+    flex: 1
   },
   header: {
     flexDirection: 'row',
@@ -525,6 +508,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16
   },
+  rowMultiline: {
+    alignItems: 'flex-start'
+  },
   rowLast: {
     borderBottomWidth: 0
   },
@@ -545,6 +531,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333333',
     paddingVertical: 0
+  },
+  rowInputMultiline: {
+    minHeight: 64,
+    textAlignVertical: 'top'
   },
   rowRight: {
     flexDirection: 'row',
@@ -594,6 +584,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     gap: 8
+  },
+  pickerList: {
+    maxHeight: 240
   },
   pickerItem: {
     paddingVertical: 10

@@ -23,9 +23,12 @@ export class UsersService {
       const { password, ...userData } = createUserDto;
       const passwordHash = await bcrypt.hash(password, 10);
 
-      // 如果没有提供用户名，生成默认用户名
-      if (!userData.username) {
-        userData.username = await this.generateDefaultUsername();
+      // 生成默认爪印号
+      userData.username = await this.generateDefaultPawId();
+
+      // 如果没有提供昵称，生成默认昵称
+      if (!userData.nickname) {
+        userData.nickname = await this.generateDefaultNickname();
       }
 
       const user = this.userRepository.create({
@@ -37,41 +40,49 @@ export class UsersService {
     } catch (error) {
       const errorCode = (error as { code?: string }).code;
       if (errorCode === '23505') {
-        throw new ConflictException('Username, email or phone already exists');
+        throw new ConflictException('邮箱或手机号已存在');
       }
       throw new InternalServerErrorException('Failed to create user');
     }
   }
 
   /**
-   * 生成唯一的默认用户名
-   * 格式: user_随机8位数字
+   * 生成唯一的默认爪印号
+   * 格式: 8位数字
    */
-  private async generateDefaultUsername(): Promise<string> {
-    let username: string;
+  private async generateDefaultPawId(): Promise<string> {
+    let pawId: string;
     let attempts = 0;
     const maxAttempts = 10;
 
     while (attempts < maxAttempts) {
-      // 生成 8 位随机数字
       const randomNum = Math.floor(10000000 + Math.random() * 90000000);
-      username = `user_${randomNum}`;
+      pawId = `${randomNum}`;
 
-      // 检查用户名是否已存在
+      // 检查爪印号是否已存在
       const existingUser = await this.userRepository.findOne({
-        where: { username },
+        where: { username: pawId },
       });
 
       if (!existingUser) {
-        return username;
+        return pawId;
       }
 
       attempts++;
     }
 
-    throw new InternalServerErrorException(
-      'Failed to generate unique username',
-    );
+    throw new InternalServerErrorException('生成唯一爪印号失败');
+  }
+
+  /**
+   * 生成默认昵称
+   * 格式: 用户{注册用户数量 + 1}
+   */
+  private async generateDefaultNickname(): Promise<string> {
+    const total = await this.userRepository.count({
+      where: { isDeleted: false },
+    });
+    return `用户${total + 1}`;
   }
 
   async findOne(id: string): Promise<User> {
@@ -110,6 +121,12 @@ export class UsersService {
     return user;
   }
 
+  async findByWechatOpenId(openId: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { wechatOpenId: openId, isDeleted: false },
+    });
+  }
+
   async findWithPets(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id, isDeleted: false },
@@ -133,7 +150,7 @@ export class UsersService {
     } catch (error) {
       const errorCode = (error as { code?: string }).code;
       if (errorCode === '23505') {
-        throw new ConflictException('Username, email or phone already exists');
+        throw new ConflictException('邮箱或手机号已存在');
       }
       throw new InternalServerErrorException('Failed to update user');
     }

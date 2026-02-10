@@ -27,6 +27,9 @@ export class User {
   @Column({ type: 'varchar', length: 50, unique: true })
   username: string;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  nickname?: string;
+
   @Column({ type: 'varchar', length: 100, unique: true })
   email: string;
 
@@ -41,6 +44,9 @@ export class User {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   backgroundUrl?: string;
+
+  @Column({ type: 'varchar', length: 64, nullable: true, unique: true })
+  wechatOpenId?: string;
 
   @Column({ type: 'text', nullable: true })
   signature?: string;
@@ -77,6 +83,9 @@ export class User {
   @BeforeUpdate()
   normalizeData() {
     this.username = this.username?.trim();
+    if (this.nickname) {
+      this.nickname = this.nickname.trim();
+    }
     if (this.email) {
       this.email = this.email.toLowerCase().trim();
     }
