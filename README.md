@@ -1,244 +1,314 @@
-# PawWisdom
+# 🐾 PawWisdom - AI 驱动的宠物健康与生活社区
 
-AI 驱动的宠物健康与生活社区
+PawWisdom 是一个全栈宠物健康管理与社区应用，使用 AI 技术为宠物主人提供智能服务。
 
-## 项目结构
+## 📋 项目简介
 
-```
-PawWisdom/
-├── back-end/          # NestJS 后端服务
-├── front-end/         # React Native (Expo) 移动端应用
-├── .cursor/rules/     # Cursor AI 开发规范
-│   ├── backend-nestjs.mdc
-│   ├── frontend-react-native.mdc
-│   └── git-workflow.mdc
-├── .husky/            # Git Hooks
-│   ├── pre-commit
-│   └── commit-msg
-├── package.json       # 根目录依赖管理
-├── commitlint.config.js
-├── GIT_HOOKS.md      # Git Hooks 使用说明
-└── prd.md            # 产品需求文档
-```
+PawWisdom 旨在成为宠物主人的贴心伴侣，提供：
 
-## 技术栈
+- 🎯 宠物档案管理
+- 🤖 AI 情绪识别
+- 📝 健康手账记录
+- 👥 宠物社区互动
+- 📍 同城宠物社交
+
+## 🚀 技术栈
 
 ### 后端
 
 - **框架**: NestJS 11
-- **语言**: TypeScript 5.7
-- **包管理**: pnpm
-- **数据库**: PostgreSQL (Supabase)
-- **代码规范**: ESLint + Prettier
+- **数据库**: Supabase (PostgreSQL)
+- **ORM**: TypeORM
+- **认证**: JWT (Passport)
+- **语言**: TypeScript
 
 ### 前端
 
-- **框架**: React Native 0.81 + Expo 54
-- **路由**: Expo Router 6
-- **语言**: TypeScript 5.9
-- **包管理**: npm
-- **代码规范**: ESLint (expo 配置)
+- **框架**: React Native (Expo)
+- **导航**: Expo Router
+- **状态管理**: Zustand
+- **数据获取**: TanStack React Query
+- **HTTP 客户端**: Axios
 
-## 快速开始
+## 📦 项目结构
 
-### 1. 克隆项目并安装依赖
+```
+PawWisdom/
+├── back-end/              # NestJS 后端服务
+│   ├── src/
+│   │   ├── config/        # 配置文件
+│   │   ├── entities/      # 数据库实体
+│   │   ├── modules/       # 功能模块
+│   │   │   ├── auth/      # 认证模块
+│   │   │   ├── users/     # 用户模块
+│   │   │   └── pets/      # 宠物模块
+│   │   └── common/        # 公共资源
+│   └── database/          # 数据库脚本
+├── front-end/             # React Native 前端应用
+│   ├── app/               # 应用页面
+│   │   ├── auth/          # 认证页面
+│   │   └── (tabs)/        # Tab导航页面
+│   ├── services/          # API服务层
+│   ├── store/             # 状态管理
+│   └── config/            # 配置文件
+└── docs/                  # 项目文档
+```
+
+## 🛠️ 快速开始
+
+### 前置要求
+
+- Node.js 18+
+- pnpm 8+
+- Supabase 账号
+
+### 1. 克隆项目
 
 ```bash
-# 克隆项目
 git clone <repository-url>
 cd PawWisdom
+```
 
-# 安装根目录依赖（Git Hooks）
-npm install
+### 2. 安装依赖
 
-# 安装后端依赖
-cd back-end
+```bash
 pnpm install
-
-# 安装前端依赖
-cd ../front-end
-npm install
 ```
 
-### 2. 启动开发服务器
+### 3. 配置 Supabase 数据库
 
-**后端**:
+1. 在 [Supabase](https://supabase.com) 创建新项目
+2. 在 SQL Editor 中运行 `back-end/database/init.sql` 脚本
+3. 获取数据库连接信息
+
+### 4. 配置环境变量
+
+#### 后端配置
 
 ```bash
 cd back-end
-pnpm start:dev
+cp .env.example .env
 ```
 
-**前端**:
-
-```bash
-cd front-end
-npm start
-```
-
-## 开发规范
-
-本项目已配置完整的开发规范和自动化检查：
-
-### Git Hooks
-
-- **pre-commit**: 自动运行 ESLint 检查和修复暂存的代码
-- **commit-msg**: 验证提交信息是否符合 Conventional Commits 规范
-
-详见 [GIT_HOOKS.md](./GIT_HOOKS.md)
-
-### Commit Message 规范
-
-格式：`<type>(<scope>): <subject>`
-
-**Type**:
-
-- `feat`: 新功能
-- `fix`: Bug 修复
-- `docs`: 文档更新
-- `style`: 代码格式
-- `refactor`: 重构
-- `perf`: 性能优化
-- `test`: 测试
-- `chore`: 构建/工具
-- `ci`: CI/CD
-
-**Scope** (任意有意义的模块名，建议参考):
-
-- `pet`, `user`, `auth`, `community`, `health`, `ai`, `api`, `ui`, `db`, `deps`, `config`
-- 也可以使用自定义的 scope，如 `my-module`, `feature-name` 等
-
-**示例**:
-
-```bash
-git commit -m "feat(pet): add emotion detection api"
-git commit -m "fix(auth): resolve jwt token expiration"
-git commit -m "docs(readme): update setup guide"
-```
-
-### Cursor AI 规范
-
-项目已配置 Cursor Rules，AI 助手会自动遵循以下规范：
-
-- **backend-nestjs.mdc**: NestJS 后端开发最佳实践
-- **frontend-react-native.mdc**: React Native 前端开发最佳实践
-- **git-workflow.mdc**: Git 分支管理和工作流规范
-
-## 分支管理
-
-### 主要分支
-
-- `main`: 生产环境分支
-- `develop`: 开发主分支
-
-### 功能分支命名
-
-- `feature/<description>`: 新功能开发
-- `bugfix/<description>`: Bug 修复
-- `hotfix/<description>`: 紧急修复
-- `release/<version>`: 发布准备
-
-### 工作流
-
-```bash
-# 创建功能分支
-git checkout develop
-git checkout -b feature/pet-profile
-
-# 开发并提交
-git add .
-git commit -m "feat(pet): add pet profile creation"
-
-# 推送并创建 PR
-git push -u origin feature/pet-profile
-```
-
-## 代码检查
-
-### 后端
-
-```bash
-cd back-end
-pnpm lint          # 运行 ESLint
-pnpm format        # 运行 Prettier
-pnpm test          # 运行测试
-```
-
-### 前端
-
-```bash
-cd front-end
-npm run lint       # 运行 ESLint
-```
-
-## 项目文档
-
-- [产品需求文档 (PRD)](./prd.md)
-- [开发迭代计划](./dev-iteration-plan.md)
-- [Git Hooks 使用说明](./GIT_HOOKS.md)
-
-## 环境变量
-
-### 后端 (.env)
+编辑 `.env` 文件，填入你的 Supabase 配置：
 
 ```env
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=pawwisdom
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your_password
+PORT=3000
+NODE_ENV=development
+
+# Supabase Database
+SUPABASE_DB_HOST=db.xxxxx.supabase.co
+SUPABASE_DB_PORT=5432
+SUPABASE_DB_USER=postgres
+SUPABASE_DB_PASSWORD=your-password
+SUPABASE_DB_NAME=postgres
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=7d
+
+# Supabase
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-### 前端 (.env)
+#### 前端配置
+
+```bash
+cd front-end
+cp .env.example .env
+```
+
+编辑 `.env` 文件：
 
 ```env
 EXPO_PUBLIC_API_URL=http://localhost:3000/api
 ```
 
-## 测试
+### 5. 启动应用
+
+#### 启动后端服务
+
+```bash
+# 在项目根目录
+pnpm dev:backend
+
+# 或者在 back-end 目录
+cd back-end
+pnpm start:dev
+```
+
+服务器将在 `http://localhost:3000/api` 启动
+
+#### 启动前端应用
+
+```bash
+# 在项目根目录
+pnpm dev:frontend
+
+# 或者在 front-end 目录
+cd front-end
+pnpm start
+```
+
+然后扫描二维码在 Expo Go 应用中打开，或按：
+
+- `i` - iOS 模拟器
+- `a` - Android 模拟器
+- `w` - Web 浏览器
+
+## 🎯 迭代开发计划
+
+### ✅ 迭代 1：基础框架与用户系统（已完成）
+
+- [x] 用户注册与登录
+- [x] JWT Token 认证
+- [x] 宠物档案管理（创建、编辑、删除）
+- [x] 个人中心页面
+- [x] 基础页面框架
+
+### 🔄 迭代 2：AI 情绪识别与动态发布（进行中）
+
+- [ ] 集成第三方 AI 识别 API
+- [ ] 照片/视频上传处理
+- [ ] 生成宠物心情卡
+- [ ] 动态发布系统
+- [ ] 文件存储服务(OSS)
+
+### 📅 迭代 3：社区互动与信息流
+
+- [ ] 推荐流与关注流
+- [ ] 点赞评论功能
+- [ ] 用户关注系统
+- [ ] 动态分页加载
+
+### 📅 迭代 4：健康自查与手账
+
+- [ ] AI 健康自查
+- [ ] 健康事件记录
+- [ ] 体重折线图
+- [ ] 健康提醒设置
+
+### 📅 迭代 5：优化与扩展功能
+
+- [ ] 同城功能
+- [ ] 通知系统
+- [ ] 性能优化
+- [ ] 数据统计面板
+
+## 📝 API 文档
+
+详细的 API 文档请查看：[后端 README](./back-end/README.md)
+
+### 主要接口
+
+#### 认证相关
+
+- `POST /api/auth/register` - 用户注册
+- `POST /api/auth/login` - 用户登录
+- `GET /api/auth/me` - 获取当前用户
+
+#### 用户相关
+
+- `GET /api/users/profile` - 获取用户资料
+- `PATCH /api/users/profile` - 更新用户资料
+- `DELETE /api/users/profile` - 删除用户账号
+
+#### 宠物相关
+
+- `POST /api/pets` - 创建宠物档案
+- `GET /api/pets` - 获取我的宠物列表
+- `GET /api/pets/:id` - 获取宠物详情
+- `PATCH /api/pets/:id` - 更新宠物信息
+- `DELETE /api/pets/:id` - 删除宠物档案
+
+## 🧪 测试
 
 ### 后端测试
 
 ```bash
 cd back-end
-pnpm test          # 单元测试
-pnpm test:e2e      # E2E 测试
-pnpm test:cov      # 测试覆盖率
+
+# 单元测试
+pnpm test
+
+# E2E测试
+pnpm test:e2e
+
+# 测试覆盖率
+pnpm test:cov
 ```
 
-## 构建
-
-### 后端
-
-```bash
-cd back-end
-pnpm build
-pnpm start:prod
-```
-
-### 前端
+### 前端测试
 
 ```bash
 cd front-end
-npm run android    # Android 构建
-npm run ios        # iOS 构建
-npm run web        # Web 构建
+pnpm test
 ```
 
-## 贡献指南
+## 📚 数据库设计
 
-1. Fork 本项目
+项目使用 Supabase (PostgreSQL) 作为数据库。
+
+### 主要表结构
+
+- `users` - 用户表
+- `pets` - 宠物表
+- `user_sessions` - 用户会话表
+
+更多详情请查看 `back-end/database/init.sql`
+
+## 🔒 安全注意事项
+
+1. **环境变量**: 永远不要提交 `.env` 文件到版本控制
+2. **JWT 密钥**: 生产环境使用强随机密钥
+3. **数据库密码**: 使用 Supabase 提供的强密码
+4. **CORS**: 生产环境配置正确的 CORS 策略
+5. **RLS**: 确保 Supabase Row Level Security 已正确配置
+
+## 📖 开发指南
+
+### Git 工作流
+
+请遵循项目的 Git 工作流规范，详见 [Git 工作流规范](./.cursor/rules/git-workflow.mdc)
+
+### Commit 规范
+
+使用 Conventional Commits 格式：
+
+```bash
+feat(pet): 添加宠物情绪识别功能
+fix(auth): 修复登录令牌验证错误
+docs(readme): 更新安装指南
+```
+
+### 代码规范
+
+- 后端遵循 [NestJS 最佳实践](./.cursor/rules/backend-nestjs.mdc)
+- 前端遵循 [React Native 最佳实践](./.cursor/rules/frontend-react-native.mdc)
+- 数据库遵循 [Supabase + TypeORM 规范](./.cursor/rules/database-supabase-typeorm.mdc)
+
+## 🤝 贡献指南
+
+1. Fork 本仓库
 2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
 3. 提交更改 (`git commit -m 'feat(scope): add amazing feature'`)
 4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
+5. 打开 Pull Request
 
-## 许可证
+## 📄 许可证
 
-本项目采用 MIT 许可证
+本项目为私有项目，仅供开发团队使用。
 
-## 联系方式
+## 👥 团队
 
-- 项目负责人: Yuxx
-- Email: yuxx6698@163.com
-- 项目地址: [PawWisdom](https://github.com/yulb-dev/PawWisdom)
+PawWisdom Development Team
+
+## 📮 联系方式
+
+如有问题或建议，请提交 Issue 或联系项目维护者。
+
+---
+
+**开发状态**: 迭代 1 已完成 | **版本**: v0.1.0 | **更新时间**: 2026-02
