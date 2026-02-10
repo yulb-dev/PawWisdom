@@ -2,11 +2,14 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Post } from '../../entities/post.entity';
 import { Hashtag } from '../../entities/hashtag.entity';
+import { PostLike } from '../../entities/post-like.entity';
+import { PostFavorite } from '../../entities/post-favorite.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { QueryPostsDto, PostSortBy } from './dto/query-posts.dto';
@@ -26,6 +29,10 @@ export class PostsService {
     private postRepository: Repository<Post>,
     @InjectRepository(Hashtag)
     private hashtagRepository: Repository<Hashtag>,
+    @InjectRepository(PostLike)
+    private postLikeRepository: Repository<PostLike>,
+    @InjectRepository(PostFavorite)
+    private postFavoriteRepository: Repository<PostFavorite>,
   ) {}
 
   /**
@@ -298,5 +305,224 @@ export class PostsService {
    */
   async incrementShareCount(postId: string): Promise<void> {
     await this.postRepository.increment({ id: postId }, 'shareCount', 1);
+  }
+
+  /**
+   * 获取用户草稿列表
+   */
+  async getDrafts(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPostsResult> {
+    const [data, total] = await this.postRepository.findAndCount({
+      where: {
+        userId,
+        isDraft: true,
+        isDeleted: false,
+      },
+      relations: ['pet', 'hashtags'],
+      order: {
+        updatedAt: 'DESC',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * 点赞动态（创建点赞记录）
+   */
+  async likePost(postId: string, userId: string): Promise<void> {
+    // 检查是否已点赞
+    const existingLike = await this.postLikeRepository.findOne({
+      where: { postId, userId },
+    });
+
+    if (existingLike) {
+      throw new ConflictException('您已经点赞过此动态');
+    }
+
+    // 创建点赞记录
+    const like = this.postLikeRepository.create({ postId, userId });
+    await this.postLikeRepository.save(like);
+  }
+
+  /**
+   * 取消点赞
+   */
+  async unlikePost(postId: string, userId: string): Promise<void> {
+    const like = await this.postLikeRepository.findOne({
+      where: { postId, userId },
+    });
+
+    if (!like) {
+      throw new NotFoundException('点赞记录不存在');
+    }
+
+    await this.postLikeRepository.remove(like);
+  }
+
+  /**
+   * 检查用户是否点赞了动态
+   */
+  async isPostLikedByUser(postId: string, userId: string): Promise<boolean> {
+    const like = await this.postLikeRepository.findOne({
+      where: { postId, userId },
+    });
+    return !!like;
+  }
+
+  /**
+   * 收藏动态
+   */
+  async favoritePost(postId: string, userId: string): Promise<void> {
+    // 检查是否已收藏
+    const existingFavorite = await this.postFavoriteRepository.findOne({
+      where: { postId, userId },
+    });
+
+    if (existingFavorite) {
+      throw new ConflictException('您已经收藏过此动态');
+    }
+
+    // 创建收藏记录
+    const favorite = this.postFavoriteRepository.create({ postId, userId });
+    await this.postFavoriteRepository.save(favorite);
+  }
+
+  /**
+   * 取消收藏
+   */
+  async unfavoritePost(postId: string, userId: string): Promise<void> {
+    const favorite = await this.postFavoriteRepository.findOne({
+      where: { postId, userId },
+    });
+
+    if (!favorite) {
+      throw new NotFoundException('收藏记录不存在');
+    }
+
+    await this.postFavoriteRepository.remove(favorite);
+  }
+
+  /**
+   * 检查用户是否收藏了动态
+   */
+  async isPostFavoritedByUser(
+    postId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const favorite = await this.postFavoriteRepository.findOne({
+      where: { postId, userId },
+    });
+    return !!favorite;
+  }
+
+  /**
+   * 获取用户点赞的动态列表
+   */
+  async getLikedPosts(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPostsResult> {
+    const [likes, total] = await this.postLikeRepository.findAndCount({
+      where: { userId },
+      relations: ['post', 'post.user', 'post.pet', 'post.hashtags'],
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const data = likes
+      .map((like) => like.post)
+      .filter((post) => post && !post.isDeleted);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * 获取用户收藏的动态列表
+   */
+  async getFavoritedPosts(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPostsResult> {
+    const [favorites, total] = await this.postFavoriteRepository.findAndCount({
+      where: { userId },
+      relations: ['post', 'post.user', 'post.pet', 'post.hashtags'],
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const data = favorites
+      .map((favorite) => favorite.post)
+      .filter((post) => post && !post.isDeleted);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * 获取用户的动态列表（包括草稿）
+   */
+  async getUserPosts(
+    userId: string,
+    includeDrafts: boolean = false,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPostsResult> {
+    const whereCondition: FindOptionsWhere<Post> = {
+      userId,
+      isDeleted: false,
+    };
+
+    if (!includeDrafts) {
+      whereCondition.isDraft = false;
+    }
+
+    const [data, total] = await this.postRepository.findAndCount({
+      where: whereCondition,
+      relations: ['pet', 'hashtags'],
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

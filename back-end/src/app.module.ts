@@ -9,6 +9,7 @@ import { PetsModule } from './modules/pets/pets.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { AiModule } from './modules/ai/ai.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { CommentsModule } from './modules/comments/comments.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -29,6 +30,7 @@ import { AppService } from './app.service';
     UploadModule,
     AiModule,
     PostsModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [

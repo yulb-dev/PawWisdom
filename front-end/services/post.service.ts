@@ -4,9 +4,13 @@ export interface Post {
   id: string;
   userId: string;
   petId?: string;
+  title?: string;
   content: string;
   mediaType?: 'image' | 'video';
   mediaUrls?: string[];
+  coverImageUrl?: string;
+  petMood?: string;
+  mentionedUserIds?: string[];
   aiAnalysis?: {
     emotion?: string;
     confidence?: number;
@@ -16,6 +20,8 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   shareCount: number;
+  favoriteCount: number;
+  isDraft: boolean;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -38,9 +44,13 @@ export interface Post {
 
 export interface CreatePostRequest {
   petId?: string;
+  title?: string;
   content: string;
   mediaType?: 'image' | 'video';
   mediaUrls?: string[];
+  coverImageUrl?: string;
+  petMood?: string;
+  mentionedUserIds?: string[];
   aiAnalysis?: {
     emotion?: string;
     confidence?: number;
@@ -48,6 +58,7 @@ export interface CreatePostRequest {
     moodCardUrl?: string;
   };
   hashtags?: string[];
+  isDraft?: boolean;
 }
 
 export interface UpdatePostRequest {
@@ -163,6 +174,85 @@ class PostService {
    */
   async sharePost(id: string): Promise<void> {
     await api.post(`/posts/${id}/share`);
+  }
+
+  /**
+   * 获取草稿列表
+   */
+  async getDrafts(page: number = 1, limit: number = 20): Promise<PaginatedPostsResult> {
+    const response = await api.get<PaginatedPostsResult>('/posts/me/drafts', {
+      params: { page, limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * 获取用户点赞的动态
+   */
+  async getLikedPosts(page: number = 1, limit: number = 20): Promise<PaginatedPostsResult> {
+    const response = await api.get<PaginatedPostsResult>('/posts/me/liked', {
+      params: { page, limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * 获取用户收藏的动态
+   */
+  async getFavoritedPosts(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPostsResult> {
+    const response = await api.get<PaginatedPostsResult>('/posts/me/favorited', {
+      params: { page, limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * 获取用户的动态列表
+   */
+  async getUserPosts(
+    includeDrafts: boolean = false,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPostsResult> {
+    const response = await api.get<PaginatedPostsResult>('/posts/me/posts', {
+      params: { includeDrafts, page, limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * 收藏动态
+   */
+  async favoritePost(id: string): Promise<void> {
+    await api.post(`/posts/${id}/favorite`);
+  }
+
+  /**
+   * 取消收藏
+   */
+  async unfavoritePost(id: string): Promise<void> {
+    await api.delete(`/posts/${id}/favorite`);
+  }
+
+  /**
+   * 检查点赞状态
+   */
+  async checkLikeStatus(id: string): Promise<boolean> {
+    const response = await api.get<{ isLiked: boolean }>(`/posts/${id}/like/status`);
+    return response.data.isLiked;
+  }
+
+  /**
+   * 检查收藏状态
+   */
+  async checkFavoriteStatus(id: string): Promise<boolean> {
+    const response = await api.get<{ isFavorited: boolean }>(
+      `/posts/${id}/favorite/status`,
+    );
+    return response.data.isFavorited;
   }
 }
 

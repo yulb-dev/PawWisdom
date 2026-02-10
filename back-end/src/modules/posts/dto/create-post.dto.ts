@@ -17,6 +17,11 @@ export class CreatePostDto {
   petId?: string;
 
   @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  title?: string;
+
+  @IsString()
   @IsNotEmpty()
   @MaxLength(2000)
   content: string;
@@ -30,6 +35,22 @@ export class CreatePostDto {
   @ArrayMaxSize(9)
   @IsOptional()
   mediaUrls?: string[];
+
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  coverImageUrl?: string;
+
+  @IsString()
+  @MaxLength(50)
+  @IsOptional()
+  petMood?: string;
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @ArrayMaxSize(20)
+  @IsOptional()
+  mentionedUserIds?: string[];
 
   @IsObject()
   @IsOptional()
@@ -45,4 +66,7 @@ export class CreatePostDto {
   @ArrayMaxSize(10)
   @IsOptional()
   hashtags?: string[];
+
+  @IsOptional()
+  isDraft?: boolean;
 }

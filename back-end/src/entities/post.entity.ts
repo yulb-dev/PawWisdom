@@ -25,6 +25,7 @@ export enum MediaType {
 @Index(['userId', 'isDeleted'])
 @Index(['petId'])
 @Index(['createdAt'])
+@Index(['isDraft'])
 export class Post {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -34,6 +35,9 @@ export class Post {
 
   @Column({ type: 'uuid', nullable: true })
   petId?: string;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  title?: string;
 
   @Column({ type: 'text' })
   content: string;
@@ -47,6 +51,15 @@ export class Post {
 
   @Column({ type: 'jsonb', nullable: true })
   mediaUrls?: string[];
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  coverImageUrl?: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  petMood?: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  mentionedUserIds?: string[];
 
   @Column({ type: 'jsonb', nullable: true })
   aiAnalysis?: {
@@ -64,6 +77,12 @@ export class Post {
 
   @Column({ type: 'int', default: 0 })
   shareCount: number;
+
+  @Column({ type: 'int', default: 0 })
+  favoriteCount: number;
+
+  @Column({ type: 'boolean', default: false })
+  isDraft: boolean;
 
   @Column({ type: 'boolean', default: false })
   isDeleted: boolean;

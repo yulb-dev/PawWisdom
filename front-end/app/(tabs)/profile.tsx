@@ -173,27 +173,56 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* 我的内容卡片 */}
+        <View style={styles.contentCard}>
+          <View style={styles.contentGrid}>
+            <TouchableOpacity style={styles.contentItem} onPress={() => router.push('/my-posts')}>
+              <Ionicons name="newspaper-outline" size={24} color="#f97316" />
+              <Text style={styles.contentItemText}>我的动态</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.contentItem} onPress={() => router.push('/my-drafts')}>
+              <Ionicons name="document-outline" size={24} color="#8B5CF6" />
+              <Text style={styles.contentItemText}>草稿箱</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.contentItem} onPress={() => router.push('/my-likes')}>
+              <Ionicons name="heart-outline" size={24} color="#FF6B6B" />
+              <Text style={styles.contentItemText}>我的点赞</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.contentItem}
+              onPress={() => router.push('/my-favorites')}
+            >
+              <Ionicons name="star-outline" size={24} color="#FCD34D" />
+              <Text style={styles.contentItemText}>我的收藏</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={styles.petCard}>
           <View style={styles.petHeader}>
             <View style={styles.petTitleRow}>
               <Ionicons name="paw" size={20} color="#f97316" />
               <Text style={styles.petTitle}>我的宠物</Text>
-              {pets.length > 0 && <View style={styles.petBadge}>
-                <Text style={styles.petBadgeText}>{pets.length}</Text>
-              </View>}
+              {pets.length > 0 && (
+                <View style={styles.petBadge}>
+                  <Text style={styles.petBadgeText}>{pets.length}</Text>
+                </View>
+              )}
             </View>
             <TouchableOpacity onPress={() => router.push({ pathname: '/pets' })}>
               <Text style={styles.viewAllText}>查看全部</Text>
             </TouchableOpacity>
           </View>
-          
+
           {pets.length > 0 ? (
             <View style={styles.petList}>
               {topPets.map((pet) => (
                 <TouchableOpacity
                   key={pet.id}
                   style={styles.petItem}
-                  onPress={() => router.push({ pathname: '/pets/edit', params: { id: pet.id } })}
+                  onPress={() =>
+                    router.push({ pathname: '/pets/edit', params: { id: pet.id } })
+                  }
                 >
                   <View style={styles.petAvatarWrap}>
                     <Image
@@ -207,9 +236,16 @@ export default function ProfileScreen() {
                     />
                   </View>
                   <View style={styles.petItemInfo}>
-                    <Text style={styles.petItemName} numberOfLines={1}>{pet.name}</Text>
+                    <Text style={styles.petItemName} numberOfLines={1}>
+                      {pet.name}
+                    </Text>
                     <Text style={styles.petItemBreed} numberOfLines={1}>
-                      {pet.breed || (pet.species === 'cat' ? '猫' : pet.species === 'dog' ? '狗' : '其他')}
+                      {pet.breed ||
+                        (pet.species === 'cat'
+                          ? '猫'
+                          : pet.species === 'dog'
+                            ? '狗'
+                            : '其他')}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
@@ -226,10 +262,7 @@ export default function ProfileScreen() {
               )}
             </View>
           ) : (
-            <TouchableOpacity
-              style={styles.emptyPetCard}
-              onPress={() => router.push('/pets/edit')}
-            >
+            <TouchableOpacity style={styles.emptyPetCard} onPress={() => router.push('/pets/edit')}>
               <Ionicons name="add-circle-outline" size={40} color="#f97316" />
               <Text style={styles.emptyPetText}>添加第一只宠物</Text>
             </TouchableOpacity>
@@ -352,6 +385,38 @@ const styles = StyleSheet.create({
   avatar: {
     width: '100%',
     height: '100%'
+  },
+  contentCard: {
+    marginTop: 16,
+    marginHorizontal: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2
+  },
+  contentGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12
+  },
+  contentItem: {
+    flex: 1,
+    minWidth: '45%',
+    aspectRatio: 1.5,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
+  },
+  contentItemText: {
+    fontSize: fontSize(14),
+    fontWeight: '600',
+    color: '#1f2937'
   },
   petCard: {
     marginTop: 16,

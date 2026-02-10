@@ -127,8 +127,12 @@ export class PostsController {
   @HttpPost(':id/like')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async like(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.postsService.incrementLikeCount(id);
+  async like(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    const userId = req.user.userId;
+    await this.postsService.likePost(id, userId);
     return { success: true };
   }
 
@@ -139,9 +143,78 @@ export class PostsController {
   @Delete(':id/like')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async unlike(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.postsService.decrementLikeCount(id);
+  async unlike(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    const userId = req.user.userId;
+    await this.postsService.unlikePost(id, userId);
     return { success: true };
+  }
+
+  /**
+   * 检查是否点赞
+   * GET /api/posts/:id/like/status
+   */
+  @Get(':id/like/status')
+  @UseGuards(JwtAuthGuard)
+  async getLikeStatus(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ isLiked: boolean }> {
+    const userId = req.user.userId;
+    const isLiked = await this.postsService.isPostLikedByUser(id, userId);
+    return { isLiked };
+  }
+
+  /**
+   * 收藏动态
+   * POST /api/posts/:id/favorite
+   */
+  @HttpPost(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async favorite(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    const userId = req.user.userId;
+    await this.postsService.favoritePost(id, userId);
+    return { success: true };
+  }
+
+  /**
+   * 取消收藏
+   * DELETE /api/posts/:id/favorite
+   */
+  @Delete(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async unfavorite(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    const userId = req.user.userId;
+    await this.postsService.unfavoritePost(id, userId);
+    return { success: true };
+  }
+
+  /**
+   * 检查是否收藏
+   * GET /api/posts/:id/favorite/status
+   */
+  @Get(':id/favorite/status')
+  @UseGuards(JwtAuthGuard)
+  async getFavoriteStatus(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ isFavorited: boolean }> {
+    const userId = req.user.userId;
+    const isFavorited = await this.postsService.isPostFavoritedByUser(
+      id,
+      userId,
+    );
+    return { isFavorited };
   }
 
   /**
@@ -154,5 +227,66 @@ export class PostsController {
   async share(@Param('id') id: string): Promise<{ success: boolean }> {
     await this.postsService.incrementShareCount(id);
     return { success: true };
+  }
+
+  /**
+   * 获取用户草稿列表
+   * GET /api/posts/me/drafts
+   */
+  @Get('me/drafts')
+  @UseGuards(JwtAuthGuard)
+  async getDrafts(
+    @Request() req: AuthRequest,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedPostsResult> {
+    const userId = req.user.userId;
+    return this.postsService.getDrafts(userId, page, limit);
+  }
+
+  /**
+   * 获取用户点赞的动态列表
+   * GET /api/posts/me/liked
+   */
+  @Get('me/liked')
+  @UseGuards(JwtAuthGuard)
+  async getLikedPosts(
+    @Request() req: AuthRequest,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedPostsResult> {
+    const userId = req.user.userId;
+    return this.postsService.getLikedPosts(userId, page, limit);
+  }
+
+  /**
+   * 获取用户收藏的动态列表
+   * GET /api/posts/me/favorited
+   */
+  @Get('me/favorited')
+  @UseGuards(JwtAuthGuard)
+  async getFavoritedPosts(
+    @Request() req: AuthRequest,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedPostsResult> {
+    const userId = req.user.userId;
+    return this.postsService.getFavoritedPosts(userId, page, limit);
+  }
+
+  /**
+   * 获取用户的动态列表
+   * GET /api/posts/me/posts
+   */
+  @Get('me/posts')
+  @UseGuards(JwtAuthGuard)
+  async getUserPosts(
+    @Request() req: AuthRequest,
+    @Query('includeDrafts') includeDrafts?: boolean,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedPostsResult> {
+    const userId = req.user.userId;
+    return this.postsService.getUserPosts(userId, includeDrafts, page, limit);
   }
 }
