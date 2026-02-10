@@ -5,25 +5,31 @@
   "description": "PawWisdom - AI驱动的宠物健康与生活社区",
   "scripts": {
     "prepare": "husky",
-    "dev:backend": "cd back-end && pnpm start:dev",
-    "dev:frontend": "cd front-end && npm start",
-    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "lint:backend": "cd back-end && pnpm lint",
-    "lint:frontend": "cd front-end && npm run lint"
+    "dev:backend": "pnpm --filter back-end start:dev",
+    "dev:frontend": "pnpm --filter front-end start",
+    "dev": "pnpm run dev:backend & pnpm run dev:frontend",
+    "build:backend": "pnpm --filter back-end build",
+    "build:frontend": "pnpm --filter front-end build",
+    "build": "pnpm --filter back-end build && pnpm --filter front-end build",
+    "lint:backend": "pnpm --filter back-end lint",
+    "lint:frontend": "pnpm --filter front-end lint",
+    "lint": "pnpm --filter back-end lint && pnpm --filter front-end lint",
+    "test:backend": "pnpm --filter back-end test",
+    "test:frontend": "pnpm --filter front-end test",
+    "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
-    "concurrently": "^9.1.2",
     "husky": "^9.0.0",
     "lint-staged": "^15.0.0"
   },
   "lint-staged": {
     "back-end/**/*.{ts,tsx}": [
-      "cd back-end && pnpm exec eslint --fix"
+      "pnpm --filter back-end exec eslint --fix"
     ],
     "front-end/**/*.{ts,tsx}": [
-      "cd front-end && npm exec eslint --fix"
+      "pnpm --filter front-end exec eslint --fix"
     ]
   }
 }

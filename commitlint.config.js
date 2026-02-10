@@ -15,7 +15,8 @@ module.exports = {
         'test', // 测试相关
         'chore', // 构建/工具链变动
         'ci', // CI/CD 配置
-        'revert' // 回滚
+        'revert', // 回滚
+        'release' // 发布
       ]
     ],
     // Subject 不能为空

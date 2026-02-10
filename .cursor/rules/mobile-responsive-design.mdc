@@ -1,0 +1,495 @@
+---
+description: 移动端响应式设计和全面屏适配规范
+globs: front-end/**/*.tsx
+alwaysApply: false
+---
+
+# 移动端响应式设计和适配规范
+
+## 核心原则
+
+本项目是面向中国用户的移动应用，必须确保在所有主流移动设备上都有完美的显示效果和用户体验。
+
+## 1. 响应式布局
+
+### 使用相对单位和 Flex 布局
+
+```tsx
+// ✅ GOOD - 使用 Flex 布局和百分比
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16
+  },
+  button: {
+    width: '100%', // 相对宽度
+    paddingVertical: 12
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8
+  }
+})
+
+// ❌ BAD - 使用固定像素值
+const styles = StyleSheet.create({
+  container: {
+    width: 375, // 不要使用固定宽度
+    height: 667 // 不要使用固定高度
+  }
+})
+```
+
+### 根据屏幕尺寸动态计算
+
+```tsx
+import { Dimensions, Platform } from 'react-native'
+
+// ✅ GOOD - 响应式尺寸计算
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+
+// 基准设计稿宽度（例如 375px）
+const DESIGN_WIDTH = 375
+
+// 缩放函数
+const scale = (size: number) => (SCREEN_WIDTH / DESIGN_WIDTH) * size
+
+// 使用示例
+const styles = StyleSheet.create({
+  title: {
+    fontSize: scale(20), // 根据屏幕自适应
+    marginBottom: scale(16)
+  },
+  card: {
+    width: SCREEN_WIDTH - scale(32), // 考虑边距
+    padding: scale(16)
+  }
+})
+
+// 监听屏幕变化（横竖屏切换）
+useEffect(() => {
+  const subscription = Dimensions.addEventListener('change', ({ window }) => {
+    setScreenWidth(window.width)
+    setScreenHeight(window.height)
+  })
+
+  return () => subscription?.remove()
+}, [])
+```
+
+### 响应式字体
+
+```tsx
+// ✅ GOOD - 根据屏幕宽度调整字体大小
+const getFontSize = (size: number) => {
+  const baseWidth = 375
+  const scale = SCREEN_WIDTH / baseWidth
+  const newSize = size * scale
+  // 限制最小和最大值
+  return Math.max(12, Math.min(newSize, size * 1.2))
+}
+
+const styles = StyleSheet.create({
+  heading: {
+    fontSize: getFontSize(24)
+  },
+  body: {
+    fontSize: getFontSize(16)
+  },
+  caption: {
+    fontSize: getFontSize(12)
+  }
+})
+```
+
+## 2. 安全区域适配
+
+### 必须使用 SafeAreaView
+
+```tsx
+import { SafeAreaView } from 'react-native-safe-area-context'
+
+// ✅ GOOD - 使用 SafeAreaView 包裹内容
+export default function Screen() {
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <View style={styles.content}>{/* 内容 */}</View>
+    </SafeAreaView>
+  )
+}
+
+// ❌ BAD - 不使用安全区域，内容可能被刘海屏遮挡
+export default function Screen() {
+  return <View style={styles.container}>{/* 内容可能被遮挡 */}</View>
+}
+```
+
+### 使用 useSafeAreaInsets 精确控制
+
+```tsx
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+// ✅ GOOD - 精确控制安全区域
+export default function CustomHeader() {
+  const insets = useSafeAreaInsets()
+
+  return (
+    <View
+      style={{
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right
+      }}
+    >
+      {/* 内容 */}
+    </View>
+  )
+}
+```
+
+### 固定底部按钮的安全区域
+
+```tsx
+// ✅ GOOD - 固定底部按钮适配全面屏
+const FixedBottomButton = () => {
+  const insets = useSafeAreaInsets()
+
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingBottom: insets.bottom || 16, // 至少保留 16px
+        paddingHorizontal: 16,
+        backgroundColor: '#fff'
+      }}
+    >
+      <TouchableOpacity style={styles.button}>
+        <Text>提交</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+```
+
+## 3. 全面屏和刘海屏适配
+
+### 状态栏适配
+
+```tsx
+import { StatusBar } from 'expo-status-bar'
+
+// ✅ GOOD - 配置状态栏样式
+export default function App() {
+  return (
+    <>
+      <StatusBar style="dark" backgroundColor="#ffffff" />
+      <SafeAreaView style={styles.container}>{/* 内容 */}</SafeAreaView>
+    </>
+  )
+}
+```
+
+### 全屏内容的适配
+
+```tsx
+// ✅ GOOD - 全屏图片或视频适配
+const FullScreenImage = () => {
+  const insets = useSafeAreaInsets()
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Image
+        source={require('./bg.jpg')}
+        style={{
+          width: SCREEN_WIDTH,
+          height: SCREEN_HEIGHT
+        }}
+        resizeMode="cover"
+      />
+      {/* 确保关闭按钮不被遮挡 */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: insets.top + 16,
+          right: 16
+        }}
+      >
+        <Text>关闭</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+```
+
+## 4. 触摸区域最小尺寸
+
+### 确保可触摸元素足够大
+
+```tsx
+// ✅ GOOD - 按钮触摸区域至少 44x44 点
+const styles = StyleSheet.create({
+  button: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
+})
+
+// ❌ BAD - 触摸区域太小
+const styles = StyleSheet.create({
+  tinyButton: {
+    width: 20,
+    height: 20 // 太小，用户难以点击
+  }
+})
+```
+
+### 增加触摸区域（hitSlop）
+
+```tsx
+// ✅ GOOD - 使用 hitSlop 扩大触摸区域
+<TouchableOpacity
+  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+  onPress={handlePress}
+>
+  <Icon name="close" size={20} />
+</TouchableOpacity>
+```
+
+## 5. 键盘避让
+
+### 使用 KeyboardAvoidingView
+
+```tsx
+import { KeyboardAvoidingView, Platform } from 'react-native'
+
+// ✅ GOOD - 适配键盘弹出
+export default function LoginScreen() {
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <ScrollView>
+        <TextInput placeholder="用户名" />
+        <TextInput placeholder="密码" secureTextEntry />
+        <Button title="登录" />
+      </ScrollView>
+    </KeyboardAvoidingView>
+  )
+}
+```
+
+### 监听键盘事件
+
+```tsx
+import { Keyboard } from 'react-native'
+
+// ✅ GOOD - 监听键盘显示/隐藏
+useEffect(() => {
+  const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+    setKeyboardHeight(e.endCoordinates.height)
+  })
+  const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+    setKeyboardHeight(0)
+  })
+
+  return () => {
+    showSubscription.remove()
+    hideSubscription.remove()
+  }
+}, [])
+```
+
+## 6. 图片和媒体适配
+
+### 响应式图片
+
+```tsx
+// ✅ GOOD - 图片自适应屏幕
+;<Image
+  source={{ uri: imageUrl }}
+  style={{
+    width: SCREEN_WIDTH - 32,
+    height: (SCREEN_WIDTH - 32) * 0.75 // 保持宽高比
+  }}
+  resizeMode="cover"
+/>
+
+// ✅ GOOD - 使用 aspectRatio
+const styles = StyleSheet.create({
+  image: {
+    width: '100%',
+    aspectRatio: 16 / 9 // 自动计算高度
+  }
+})
+```
+
+### 不同屏幕密度的图片
+
+```tsx
+// ✅ GOOD - 提供多倍图
+<Image source={require('./logo.png')} />
+// 自动选择：logo.png, logo@2x.png, logo@3x.png
+```
+
+## 7. 平台差异处理
+
+### 使用 Platform API
+
+```tsx
+import { Platform, StyleSheet } from 'react-native'
+
+// ✅ GOOD - 处理平台差异
+const styles = StyleSheet.create({
+  container: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4
+      },
+      android: {
+        elevation: 4
+      }
+    })
+  },
+  text: {
+    fontFamily: Platform.OS === 'ios' ? 'PingFang SC' : 'Roboto'
+  }
+})
+
+// 条件渲染
+{
+  Platform.OS === 'ios' && <IOSSpecificComponent />
+}
+{
+  Platform.OS === 'android' && <AndroidSpecificComponent />
+}
+```
+
+## 8. 横竖屏适配
+
+### 监听屏幕方向
+
+```tsx
+// ✅ GOOD - 适配横竖屏
+const [orientation, setOrientation] = useState('portrait')
+
+useEffect(() => {
+  const updateOrientation = () => {
+    const { width, height } = Dimensions.get('window')
+    setOrientation(width > height ? 'landscape' : 'portrait')
+  }
+
+  const subscription = Dimensions.addEventListener('change', updateOrientation)
+  updateOrientation()
+
+  return () => subscription?.remove()
+}, [])
+
+// 根据方向调整布局
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: orientation === 'landscape' ? 'row' : 'column'
+  }
+})
+```
+
+## 9. 性能优化
+
+### 避免不必要的重新计算
+
+```tsx
+// ✅ GOOD - 缓存尺寸计算结果
+const dimensions = useMemo(
+  () => ({
+    width: SCREEN_WIDTH - 32,
+    height: SCREEN_HEIGHT * 0.5
+  }),
+  []
+)
+
+// ❌ BAD - 每次渲染都重新计算
+const renderItem = () => <View style={{ width: SCREEN_WIDTH - 32 }}>{/* 内容 */}</View>
+```
+
+## 10. 测试检查清单
+
+开发完成后，务必在以下设备/场景测试：
+
+- [ ] iPhone SE（小屏设备）
+- [ ] iPhone 14 Pro（刘海屏）
+- [ ] iPhone 14 Pro Max（大屏设备）
+- [ ] Android 小屏设备（< 5 英寸）
+- [ ] Android 大屏设备（> 6.5 英寸）
+- [ ] 横屏模式
+- [ ] 键盘弹出时的表单
+- [ ] 深色模式（如果支持）
+- [ ] 不同字体大小设置
+
+## 常用工具函数
+
+```tsx
+// 创建 utils/responsive.ts 工具文件
+
+import { Dimensions, Platform, PixelRatio } from 'react-native'
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+
+// 设计稿基准
+const DESIGN_WIDTH = 375
+const DESIGN_HEIGHT = 812
+
+// 宽度适配
+export const wp = (percentage: number) => {
+  return (SCREEN_WIDTH * percentage) / 100
+}
+
+// 高度适配
+export const hp = (percentage: number) => {
+  return (SCREEN_HEIGHT * percentage) / 100
+}
+
+// 字体适配
+export const fontSize = (size: number) => {
+  const scale = SCREEN_WIDTH / DESIGN_WIDTH
+  const newSize = size * scale
+  return Math.round(PixelRatio.roundToNearestPixel(newSize))
+}
+
+// 是否为小屏设备
+export const isSmallDevice = SCREEN_WIDTH < 375
+
+// 是否为大屏设备
+export const isLargeDevice = SCREEN_WIDTH >= 414
+
+// 是否为 iPhone X 系列（刘海屏）
+export const isIPhoneX = () => {
+  return Platform.OS === 'ios' && (SCREEN_HEIGHT >= 812 || SCREEN_WIDTH >= 812)
+}
+```
+
+## 记住
+
+1. **始终使用 SafeAreaView** - 避免内容被刘海屏或状态栏遮挡
+2. **使用 Flex 布局** - 避免固定尺寸
+3. **测试多种设备** - 不同尺寸、刘海屏、非刘海屏
+4. **触摸区域至少 44x44** - 确保用户能轻松点击
+5. **处理键盘弹出** - 使用 KeyboardAvoidingView
+6. **考虑平台差异** - iOS 和 Android 的不同特性

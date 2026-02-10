@@ -5,6 +5,8 @@
 # 根目录依赖
 /node_modules
 /package-lock.json
+pnpm-lock.yaml
+.pnpm-store/
 
 ########################
 # back-end 忽略规则
