@@ -89,31 +89,50 @@ export default function HomeScreen() {
         <StatusBar style="dark" />
         <View style={styles.headerContainer}>
           <View style={styles.topBar}>
+            <View style={styles.leftPlaceholder} />
             <View style={styles.tabsContainer}>
               <TouchableOpacity
                 style={styles.tabButton}
                 onPress={() => setActiveTab('discover')}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 'discover' && styles.tabTextActive
-                  ]}
-                >
-                  发现
-                </Text>
-                {activeTab === 'discover' && <View style={styles.tabIndicator} />}
+                <View style={styles.tabInner}>
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === 'discover' && styles.tabTextActive
+                    ]}
+                  >
+                    发现
+                  </Text>
+                  <View style={styles.tabIndicatorWrapper}>
+                    <View
+                      style={[
+                        styles.tabIndicator,
+                        activeTab === 'discover' && styles.tabIndicatorActive
+                      ]}
+                    />
+                  </View>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.tabButton}
                 onPress={() => setActiveTab('local')}
               >
-                <Text
-                  style={[styles.tabText, activeTab === 'local' && styles.tabTextActive]}
-                >
-                  同城
-                </Text>
-                {activeTab === 'local' && <View style={styles.tabIndicator} />}
+                <View style={styles.tabInner}>
+                  <Text
+                    style={[styles.tabText, activeTab === 'local' && styles.tabTextActive]}
+                  >
+                    同城
+                  </Text>
+                  <View style={styles.tabIndicatorWrapper}>
+                    <View
+                      style={[
+                        styles.tabIndicator,
+                        activeTab === 'local' && styles.tabIndicatorActive
+                      ]}
+                    />
+                  </View>
+                </View>
               </TouchableOpacity>
             </View>
             <TouchableOpacity onPress={() => router.push('/message')}>
@@ -145,28 +164,47 @@ export default function HomeScreen() {
       {/* 固定顶部 */}
       <View style={styles.headerContainer}>
         <View style={styles.topBar}>
+          <View style={styles.leftPlaceholder} />
           <View style={styles.tabsContainer}>
             <TouchableOpacity
               style={styles.tabButton}
               onPress={() => setActiveTab('discover')}
             >
-              <Text
-                style={[styles.tabText, activeTab === 'discover' && styles.tabTextActive]}
-              >
-                发现
-              </Text>
-              {activeTab === 'discover' && <View style={styles.tabIndicator} />}
+              <View style={styles.tabInner}>
+                <Text
+                  style={[styles.tabText, activeTab === 'discover' && styles.tabTextActive]}
+                >
+                  发现
+                </Text>
+                <View style={styles.tabIndicatorWrapper}>
+                  <View
+                    style={[
+                      styles.tabIndicator,
+                      activeTab === 'discover' && styles.tabIndicatorActive
+                    ]}
+                  />
+                </View>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.tabButton}
               onPress={() => setActiveTab('local')}
             >
-              <Text
-                style={[styles.tabText, activeTab === 'local' && styles.tabTextActive]}
-              >
-                同城
-              </Text>
-              {activeTab === 'local' && <View style={styles.tabIndicator} />}
+              <View style={styles.tabInner}>
+                <Text
+                  style={[styles.tabText, activeTab === 'local' && styles.tabTextActive]}
+                >
+                  同城
+                </Text>
+                <View style={styles.tabIndicatorWrapper}>
+                  <View
+                    style={[
+                      styles.tabIndicator,
+                      activeTab === 'local' && styles.tabIndicatorActive
+                    ]}
+                  />
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
           <View style={styles.rightIcons}>
@@ -335,22 +373,22 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12
   },
-  selectText: {
-    fontSize: 18,
-    color: '#999',
-    fontWeight: '400',
+  leftPlaceholder: {
     width: 80
   },
   tabsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 24,
     flex: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    gap: 24
   },
   tabButton: {
     alignItems: 'center',
     paddingVertical: 4
+  },
+  tabInner: {
+    alignItems: 'center'
   },
   tabText: {
     fontSize: 20,
@@ -361,12 +399,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827'
   },
+  tabIndicatorWrapper: {
+    height: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    overflow: 'hidden'
+  },
   tabIndicator: {
-    width: 30,
-    height: 3,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 2,
-    marginTop: 4
+    width: 26,
+    height: 10,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+    borderRadius: 999
+  },
+  tabIndicatorActive: {
+    borderBottomColor: '#FF6B6B'
   },
   rightIcons: {
     flexDirection: 'row',
