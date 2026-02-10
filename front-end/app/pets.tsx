@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Dimensions
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
@@ -16,6 +17,11 @@ import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import { petService, Pet } from '../services/pet.service'
 import { useDialog } from '../components/ui/DialogProvider'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const CARD_MARGIN = 16
+const CARD_GAP = 12
+const CARD_WIDTH = (SCREEN_WIDTH - CARD_MARGIN * 2 - CARD_GAP) / 2
 
 const TABS = [
   { key: 'all', label: '全部' },
@@ -150,21 +156,29 @@ export default function PetsScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>宠物档案</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={24} color="#1f2937" />
+          </TouchableOpacity>
+          <Text style={styles.title}>我的宠物</Text>
+          <View style={styles.backButton} />
         </View>
 
         <View style={styles.searchRow}>
-          <Ionicons name="search" size={20} color="#b0b6bf" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="搜索宠物"
-            placeholderTextColor="#b0b6bf"
-            value={search}
-            onChangeText={setSearch}
-          />
-          <TouchableOpacity style={styles.filterButton} onPress={() => setSearch('')}>
-            <Ionicons name="options-outline" size={20} color="#ffffff" />
-          </TouchableOpacity>
+          <View style={styles.searchInputContainer}>
+            <Ionicons name="search" size={20} color="#9ca3af" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="搜索宠物名称或品种"
+              placeholderTextColor="#9ca3af"
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search ? (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Ionicons name="close-circle" size={18} color="#9ca3af" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
 
         <View style={styles.tabRow}>
@@ -198,7 +212,7 @@ export default function PetsScreen() {
               onPress={() =>
                 router.push({ pathname: '/pets/edit', params: { id: item.id } })
               }
-              onLongPress={() => handleDelete(item)}
+              activeOpacity={0.7}
             >
               <View style={styles.petImageWrap}>
                 <Image
@@ -210,32 +224,53 @@ export default function PetsScreen() {
                   style={styles.petImage}
                   contentFit="cover"
                 />
+                <View style={styles.petSpeciesBadge}>
+                  <Text style={styles.petSpeciesBadgeText}>
+                    {item.species === 'cat' ? '🐱' : item.species === 'dog' ? '🐶' : '🐾'}
+                  </Text>
+                </View>
               </View>
               <View style={styles.petInfo}>
-                <Text style={styles.petName}>{item.name}</Text>
+                <Text style={styles.petName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.petDetail} numberOfLines={1}>
+                  {item.breed || '未知品种'}
+                </Text>
                 <Text style={styles.petAge}>{getAgeText(item.birthday)}</Text>
               </View>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDelete(item)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              </TouchableOpacity>
             </TouchableOpacity>
           )}
           ListEmptyComponent={
             <View style={styles.emptyCard}>
-              <Ionicons name="paw-outline" size={56} color="#cbd5f5" />
-              <Text style={styles.emptyText}>还没有宠物档案</Text>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="paw" size={48} color="#ffffff" />
+              </View>
+              <Text style={styles.emptyTitle}>还没有宠物</Text>
+              <Text style={styles.emptyText}>添加你的第一只宠物，开启温馨的养宠生活</Text>
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={styles.emptyButton}
                 onPress={() => router.push('/pets/edit')}
               >
-                <Text style={styles.primaryButtonText}>添加第一只宠物</Text>
+                <Ionicons name="add" size={20} color="#ffffff" />
+                <Text style={styles.emptyButtonText}>添加宠物</Text>
               </TouchableOpacity>
             </View>
           }
         />
 
         <TouchableOpacity
-          style={[styles.fab, { bottom: insets.bottom + 24 }]}
+          style={[styles.fab, { bottom: insets.bottom + 20 }]}
           onPress={() => router.push('/pets/edit')}
         >
-          <Ionicons name="add" size={26} color="#ffffff" />
+          <Ionicons name="add" size={28} color="#ffffff" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -245,148 +280,226 @@ export default function PetsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f6fb'
+    backgroundColor: '#fafafa'
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fb',
-    paddingHorizontal: 16
+    backgroundColor: '#fafafa'
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f6fb'
+    backgroundColor: '#fafafa'
   },
   header: {
-    paddingVertical: 16
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#111827'
-  },
-  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#ffffff',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 8
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    letterSpacing: -0.5
+  },
+  searchRow: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff'
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f7f8fa',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: '#111827'
-  },
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: '#d59cff',
-    alignItems: 'center',
-    justifyContent: 'center'
+    color: '#1f2937'
   },
   tabRow: {
     flexDirection: 'row',
-    gap: 20,
-    paddingVertical: 18
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 24,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
   },
   tabItem: {
-    paddingBottom: 6
+    paddingBottom: 4
   },
   tabItemActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#111827'
+    borderBottomWidth: 2.5,
+    borderBottomColor: '#f97316'
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#9ca3af',
-    fontWeight: '500'
+    fontWeight: '600'
   },
   tabTextActive: {
-    color: '#111827'
+    color: '#f97316'
   },
   listContent: {
+    paddingHorizontal: CARD_MARGIN,
+    paddingTop: 20,
     paddingBottom: 120
   },
   columnWrapper: {
     justifyContent: 'space-between',
-    marginBottom: 16
+    marginBottom: CARD_GAP
   },
   petCard: {
-    width: '48%',
+    width: CARD_WIDTH,
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    padding: 12,
-    shadowColor: '#111827',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3
   },
   petImageWrap: {
     width: '100%',
-    aspectRatio: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#f3f4f6'
+    aspectRatio: 0.95,
+    backgroundColor: '#f3f4f6',
+    position: 'relative'
   },
   petImage: {
     width: '100%',
     height: '100%'
   },
+  petSpeciesBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3
+  },
+  petSpeciesBadgeText: {
+    fontSize: 16
+  },
   petInfo: {
-    paddingTop: 10
+    padding: 12
   },
   petName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#111827'
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4
+  },
+  petDetail: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginBottom: 6
   },
   petAge: {
-    marginTop: 4,
-    fontSize: 13,
-    color: '#9ca3af'
+    fontSize: 12,
+    color: '#9ca3af',
+    fontWeight: '500'
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3
   },
   emptyCard: {
-    marginTop: 40,
-    padding: 24,
-    borderRadius: 20,
+    marginTop: 60,
+    marginHorizontal: 20,
+    padding: 32,
+    borderRadius: 24,
     backgroundColor: '#ffffff',
-    alignItems: 'center'
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginTop: 16,
+  emptyIconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#f97316',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20
   },
-  primaryButton: {
-    backgroundColor: '#b65bff',
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: 16
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8
   },
-  primaryButtonText: {
+  emptyText: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24
+  },
+  emptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#f97316',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 24
+  },
+  emptyButtonText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600'
   },
   fab: {
     position: 'absolute',
     right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#b65bff',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#f97316',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#111827',
+    shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8
   }
 })

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Dimensions,
@@ -10,6 +10,8 @@ import {
   View
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
+import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { useDialog } from '../../components/ui/DialogProvider'
@@ -31,6 +33,7 @@ export default function ProfileScreen() {
   const [drawerVisible, setDrawerVisible] = useState(false)
   const drawerTranslateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current
   const insets = useSafeAreaInsets()
+  const hasMounted = useRef(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -39,6 +42,17 @@ export default function ProfileScreen() {
     }
     loadPets()
   }, [isAuthenticated])
+
+  // 监听页面焦点，每次进入页面时刷新宠物列表
+  useFocusEffect(
+    useCallback(() => {
+      if (hasMounted.current && isAuthenticated) {
+        loadPets()
+      } else {
+        hasMounted.current = true
+      }
+    }, [isAuthenticated])
+  )
 
   const loadPets = async () => {
     try {
@@ -160,36 +174,66 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.petCard}>
-          <Text style={styles.petTitle}>宠物档案</Text>
-          <View style={styles.petRight}>
-            <TouchableOpacity
-              style={styles.petStack}
-              onPress={() => router.push({ pathname: '/pets' })}
-            >
-              {topPets.map((pet, index) => (
-                <View
-                  key={pet.id}
-                  style={[styles.petAvatarWrap, { marginLeft: index === 0 ? 0 : -12 }]}
-                >
-                  <Image
-                    source={
-                      pet.avatarUrl
-                        ? { uri: pet.avatarUrl }
-                        : require('../../assets/images/default_avatar.webp')
-                    }
-                    style={styles.petAvatar}
-                    contentFit="cover"
-                  />
-                </View>
-              ))}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.addPetButton}
-              onPress={() => router.push('/pets/edit')}
-            >
-              <Text style={styles.addPetText}>+</Text>
+          <View style={styles.petHeader}>
+            <View style={styles.petTitleRow}>
+              <Ionicons name="paw" size={20} color="#f97316" />
+              <Text style={styles.petTitle}>我的宠物</Text>
+              {pets.length > 0 && <View style={styles.petBadge}>
+                <Text style={styles.petBadgeText}>{pets.length}</Text>
+              </View>}
+            </View>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/pets' })}>
+              <Text style={styles.viewAllText}>查看全部</Text>
             </TouchableOpacity>
           </View>
+          
+          {pets.length > 0 ? (
+            <View style={styles.petList}>
+              {topPets.map((pet) => (
+                <TouchableOpacity
+                  key={pet.id}
+                  style={styles.petItem}
+                  onPress={() => router.push({ pathname: '/pets/edit', params: { id: pet.id } })}
+                >
+                  <View style={styles.petAvatarWrap}>
+                    <Image
+                      source={
+                        pet.avatarUrl
+                          ? { uri: pet.avatarUrl }
+                          : require('../../assets/images/default_avatar.webp')
+                      }
+                      style={styles.petAvatar}
+                      contentFit="cover"
+                    />
+                  </View>
+                  <View style={styles.petItemInfo}>
+                    <Text style={styles.petItemName} numberOfLines={1}>{pet.name}</Text>
+                    <Text style={styles.petItemBreed} numberOfLines={1}>
+                      {pet.breed || (pet.species === 'cat' ? '猫' : pet.species === 'dog' ? '狗' : '其他')}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+                </TouchableOpacity>
+              ))}
+              {pets.length > 2 && (
+                <TouchableOpacity
+                  style={styles.viewMoreButton}
+                  onPress={() => router.push({ pathname: '/pets' })}
+                >
+                  <Text style={styles.viewMoreText}>查看更多 ({pets.length - 2})</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#f97316" />
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.emptyPetCard}
+              onPress={() => router.push('/pets/edit')}
+            >
+              <Ionicons name="add-circle-outline" size={40} color="#f97316" />
+              <Text style={styles.emptyPetText}>添加第一只宠物</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
@@ -310,58 +354,118 @@ const styles = StyleSheet.create({
     height: '100%'
   },
   petCard: {
-    marginTop: 10,
+    marginTop: 16,
     marginHorizontal: 20,
     backgroundColor: '#ffffff',
-    paddingVertical: 8,
-    paddingHorizontal: 0
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2
   },
-  petTitle: {
-    fontSize: fontSize(16),
-    color: '#111111',
-    fontWeight: '500',
-    marginBottom: 8
-  },
-  petRight: {
+  petHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12
+    justifyContent: 'space-between',
+    marginBottom: 16
   },
-  petStack: {
+  petTitleRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  petTitle: {
+    fontSize: fontSize(17),
+    color: '#1f2937',
+    fontWeight: '700'
+  },
+  petBadge: {
+    backgroundColor: '#f97316',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    minWidth: 20,
     alignItems: 'center'
   },
+  petBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff'
+  },
+  viewAllText: {
+    fontSize: fontSize(14),
+    color: '#f97316',
+    fontWeight: '600'
+  },
+  petList: {
+    gap: 12
+  },
+  petItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 12,
+    gap: 12
+  },
   petAvatarWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#ffffff',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
+    borderWidth: 2,
+    borderColor: '#ffffff'
   },
   petAvatar: {
     width: '100%',
     height: '100%'
   },
-  addPetButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#dddddd',
+  petItemInfo: {
+    flex: 1,
+    gap: 4
+  },
+  petItemName: {
+    fontSize: fontSize(15),
+    fontWeight: '600',
+    color: '#1f2937'
+  },
+  petItemBreed: {
+    fontSize: fontSize(13),
+    color: '#6b7280'
+  },
+  viewMoreButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff'
+    gap: 6,
+    paddingVertical: 12,
+    backgroundColor: '#fef3f2',
+    borderRadius: 12
   },
-  addPetText: {
-    fontSize: 22,
-    fontWeight: '400',
-    color: '#999999'
+  viewMoreText: {
+    fontSize: fontSize(14),
+    color: '#f97316',
+    fontWeight: '600'
+  },
+  emptyPetCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 24,
+    backgroundColor: '#fef3f2',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#fed7aa',
+    borderStyle: 'dashed'
+  },
+  emptyPetText: {
+    fontSize: fontSize(15),
+    color: '#f97316',
+    fontWeight: '600'
   },
   drawerOverlay: {
     ...StyleSheet.absoluteFillObject,

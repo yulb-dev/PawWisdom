@@ -131,9 +131,9 @@ export default function PetEditScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={22} color="#111827" />
+            <Ionicons name="chevron-back" size={24} color="#1f2937" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{isEditing ? '编辑宠物' : '新增宠物'}</Text>
+          <Text style={styles.headerTitle}>{isEditing ? '编辑宠物' : '添加宠物'}</Text>
           <View style={styles.headerButton} />
         </View>
 
@@ -144,9 +144,8 @@ export default function PetEditScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.section}>
-            <Text style={styles.label}>头像</Text>
-            <View style={styles.avatarRow}>
+          <View style={styles.avatarSection}>
+            <TouchableOpacity style={styles.avatarContainer} onPress={handlePickAvatar}>
               <View style={styles.avatarPreview}>
                 <Image
                   source={
@@ -157,129 +156,149 @@ export default function PetEditScreen() {
                   style={styles.avatarPreviewImage}
                   contentFit="cover"
                 />
+                <View style={styles.avatarOverlay}>
+                  <Ionicons name="camera" size={28} color="#ffffff" />
+                </View>
               </View>
-              <TouchableOpacity style={styles.avatarButton} onPress={handlePickAvatar}>
-                <Text style={styles.avatarButtonText}>选择头像</Text>
+            </TouchableOpacity>
+            <Text style={styles.avatarHint}>点击选择头像</Text>
+          </View>
+
+          <View style={styles.formSection}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                宠物名称 <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="给你的宠物起个名字"
+                placeholderTextColor="#9ca3af"
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                物种 <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={styles.selectorRow}>
+                {[
+                  { key: 'cat', label: '猫', icon: '🐱' },
+                  { key: 'dog', label: '狗', icon: '🐶' },
+                  { key: 'other', label: '其他', icon: '🐾' }
+                ].map((s) => (
+                  <TouchableOpacity
+                    key={s.key}
+                    style={[
+                      styles.selectorButton,
+                      species === s.key && styles.selectorButtonActive
+                    ]}
+                    onPress={() => setSpecies(s.key as 'cat' | 'dog' | 'other')}
+                  >
+                    <Text style={styles.selectorIcon}>{s.icon}</Text>
+                    <Text
+                      style={[
+                        styles.selectorText,
+                        species === s.key && styles.selectorTextActive
+                      ]}
+                    >
+                      {s.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>品种</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="例如：英国短毛猫、金毛"
+                placeholderTextColor="#9ca3af"
+                value={breed}
+                onChangeText={setBreed}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>性别</Text>
+              <View style={styles.selectorRow}>
+                {[
+                  { key: 'male', label: '公' },
+                  { key: 'female', label: '母' },
+                  { key: 'unknown', label: '未知' }
+                ].map((g) => (
+                  <TouchableOpacity
+                    key={g.key}
+                    style={[
+                      styles.selectorButton,
+                      gender === g.key && styles.selectorButtonActive
+                    ]}
+                    onPress={() => setGender(g.key as 'male' | 'female' | 'unknown')}
+                  >
+                    <Text
+                      style={[
+                        styles.selectorText,
+                        gender === g.key && styles.selectorTextActive
+                      ]}
+                    >
+                      {g.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>生日</Text>
+              <TouchableOpacity
+                style={styles.inputTouchable}
+                onPress={() => {
+                  if (birthday) {
+                    const parsed = new Date(birthday)
+                    if (!Number.isNaN(parsed.getTime())) {
+                      setBirthdayDraft(parsed)
+                    }
+                  }
+                  setBirthdayPickerVisible(true)
+                }}
+              >
+                <Text style={[styles.inputText, !birthday && styles.inputPlaceholder]}>
+                  {birthday || '选择宠物的生日'}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color="#9ca3af" />
               </TouchableOpacity>
             </View>
-          </View>
 
-          <View style={styles.section}>
-            <Text style={styles.label}>名称 *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="请输入宠物名称"
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>物种 *</Text>
-            <View style={styles.selectorRow}>
-              {[
-                { key: 'cat', label: '猫' },
-                { key: 'dog', label: '狗' },
-                { key: 'other', label: '其他' }
-              ].map((s) => (
-                <TouchableOpacity
-                  key={s.key}
-                  style={[
-                    styles.selectorButton,
-                    species === s.key && styles.selectorButtonActive
-                  ]}
-                  onPress={() => setSpecies(s.key as 'cat' | 'dog' | 'other')}
-                >
-                  <Text
-                    style={[
-                      styles.selectorText,
-                      species === s.key && styles.selectorTextActive
-                    ]}
-                  >
-                    {s.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>体重 (kg)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="输入体重，例如：5.5"
+                placeholderTextColor="#9ca3af"
+                value={weight}
+                onChangeText={setWeight}
+                keyboardType="decimal-pad"
+              />
             </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>品种</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="请输入品种（选填）"
-              value={breed}
-              onChangeText={setBreed}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>性别</Text>
-            <View style={styles.selectorRow}>
-              {[
-                { key: 'male', label: '公' },
-                { key: 'female', label: '母' },
-                { key: 'unknown', label: '未知' }
-              ].map((g) => (
-                <TouchableOpacity
-                  key={g.key}
-                  style={[
-                    styles.selectorButton,
-                    gender === g.key && styles.selectorButtonActive
-                  ]}
-                  onPress={() => setGender(g.key as 'male' | 'female' | 'unknown')}
-                >
-                  <Text
-                    style={[
-                      styles.selectorText,
-                      gender === g.key && styles.selectorTextActive
-                    ]}
-                  >
-                    {g.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>生日</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => {
-                if (birthday) {
-                  const parsed = new Date(birthday)
-                  if (!Number.isNaN(parsed.getTime())) {
-                    setBirthdayDraft(parsed)
-                  }
-                }
-                setBirthdayPickerVisible(true)
-              }}
-            >
-              <Text style={styles.inputText}>{birthday || '请选择生日'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>体重 (kg)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="请输入体重（选填）"
-              value={weight}
-              onChangeText={setWeight}
-              keyboardType="decimal-pad"
-            />
           </View>
         </ScrollView>
 
-        <TouchableOpacity
-          style={[styles.saveButton, { bottom: insets.bottom + 16 }]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? <ActivityIndicator size="small" color="#ffffff" /> : null}
-          <Text style={styles.saveButtonText}>{saving ? '保存中...' : '保存'}</Text>
-        </TouchableOpacity>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Ionicons name="checkmark" size={24} color="#ffffff" />
+            )}
+            <Text style={styles.saveButtonText}>{saving ? '保存中...' : '保存'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Modal
@@ -328,11 +347,11 @@ export default function PetEditScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f6fb'
+    backgroundColor: '#fafafa'
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fb'
+    backgroundColor: '#fafafa'
   },
   centerContainer: {
     flex: 1,
@@ -343,9 +362,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff'
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
   },
   headerButton: {
     width: 40,
@@ -354,83 +375,111 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111827'
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    letterSpacing: -0.5
   },
   scrollContent: {
-    padding: 16,
     paddingBottom: 120
   },
-  section: {
+  avatarSection: {
+    alignItems: 'center',
+    paddingVertical: 32,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  avatarContainer: {
     marginBottom: 12
   },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-    marginBottom: 8
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
-  },
   avatarPreview: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#f3f4f6',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    position: 'relative'
   },
   avatarPreviewImage: {
     width: '100%',
     height: '100%'
   },
-  avatarButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6'
+  avatarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  avatarButtonText: {
+  avatarHint: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500'
+  },
+  formSection: {
+    paddingHorizontal: 20,
+    paddingTop: 24
+  },
+  inputGroup: {
+    marginBottom: 24
+  },
+  label: {
     fontSize: 14,
-    color: '#111827',
-    fontWeight: '600'
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 10
+  },
+  required: {
+    color: '#ef4444'
   },
   input: {
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 15,
-    color: '#111827'
+    color: '#1f2937'
+  },
+  inputTouchable: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
   inputText: {
-    color: '#111827',
+    color: '#1f2937',
     fontSize: 15
+  },
+  inputPlaceholder: {
+    color: '#9ca3af'
   },
   selectorRow: {
     flexDirection: 'row',
-    gap: 10
+    gap: 12
   },
   selectorButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: 6
   },
   selectorButtonActive: {
-    backgroundColor: '#b65bff',
-    borderColor: '#b65bff'
+    backgroundColor: '#f97316',
+    borderColor: '#f97316'
+  },
+  selectorIcon: {
+    fontSize: 20
   },
   selectorText: {
     fontSize: 14,
@@ -440,27 +489,40 @@ const styles = StyleSheet.create({
   selectorTextActive: {
     color: '#ffffff'
   },
-  saveButton: {
+  footer: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 24,
-    backgroundColor: '#b65bff',
-    paddingVertical: 15,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0'
+  },
+  saveButton: {
+    backgroundColor: '#f97316',
+    paddingVertical: 16,
     borderRadius: 16,
-    alignItems: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 8
+    gap: 8,
+    shadowColor: '#f97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4
   },
   saveButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '700',
+    letterSpacing: 0.5
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20
@@ -469,41 +531,41 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20
+    borderRadius: 20,
+    padding: 24
   },
   modalTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111111',
-    marginBottom: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 20,
     textAlign: 'center'
   },
   modalButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 16
+    marginTop: 20
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center'
   },
   modalButtonCancel: {
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#f3f4f6'
   },
   modalButtonConfirm: {
-    backgroundColor: '#111111'
+    backgroundColor: '#f97316'
   },
   modalButtonTextCancel: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#666666'
+    fontWeight: '600',
+    color: '#6b7280'
   },
   modalButtonTextConfirm: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#ffffff'
   }
 })
