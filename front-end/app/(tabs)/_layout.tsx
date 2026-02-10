@@ -23,6 +23,7 @@ export default function TabLayout() {
             <Image
               source={require('../../assets/icons/tabbar/home.svg')}
               style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+              contentFit="contain"
             />
           )
         }}
@@ -35,6 +36,7 @@ export default function TabLayout() {
             <Image
               source={require('../../assets/icons/tabbar/planet.svg')}
               style={[styles.tabIcon, { width: size + 2, height: size + 2, tintColor: color }]}
+              contentFit="contain"
             />
           )
         }}
@@ -47,6 +49,7 @@ export default function TabLayout() {
             <Image
               source={require('../../assets/icons/tabbar/create.svg')}
               style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+              contentFit="contain"
             />
           )
         }}
@@ -59,6 +62,7 @@ export default function TabLayout() {
             <Image
               source={require('../../assets/icons/tabbar/message.svg')}
               style={[styles.tabIcon, { width: size, height: size, tintColor: color }]}
+              contentFit="contain"
             />
           )
         }}
@@ -71,6 +75,7 @@ export default function TabLayout() {
             <Image
               source={require('../../assets/icons/tabbar/myself.svg')}
               style={[styles.tabIcon, { width: size + 2, height: size + 2, tintColor: color }]}
+              contentFit="contain"
             />
           )
         }}
@@ -93,6 +98,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff'
   },
   tabIcon: {
-    resizeMode: 'contain'
+    // contentFit 作为 prop 传递，不需要在 style 中定义
   }
 })
