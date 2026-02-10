@@ -62,16 +62,16 @@ export default function HomeScreen() {
     </View>
   )
 
-  // 搜索框隐藏动画
-  const searchBarHeight = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [56, 0],
-    extrapolate: 'clamp'
-  })
-
   const searchBarOpacity = scrollY.interpolate({
     inputRange: [0, 50],
     outputRange: [1, 0],
+    extrapolate: 'clamp'
+  })
+ 
+  // 搜索框垂直平移动画（避免频繁改变布局高度导致闪动）
+  const searchBarTranslateY = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, -56],
     extrapolate: 'clamp'
   })
 
@@ -223,8 +223,8 @@ export default function HomeScreen() {
           style={[
             styles.searchBarContainer,
             {
-              height: searchBarHeight,
-              opacity: searchBarOpacity
+              opacity: searchBarOpacity,
+              transform: [{ translateY: searchBarTranslateY }]
             }
           ]}
         >
