@@ -311,9 +311,9 @@ export default function HomeScreen() {
               onPress={() => router.push('/search')}
               activeOpacity={0.8}
             >
-              <Ionicons name="search-outline" size={24} color="#999" />
+              <Ionicons name="search-outline" size={23} color="#bebebe" />
               <Text style={styles.searchPlaceholder}>发现更多...</Text>
-              <Ionicons name="mic-outline" size={24} color="#999" />
+              <Ionicons name="mic" size={23} color="#777777" />
             </TouchableOpacity>
           </Animated.View>
         }
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8
   },
-  searchPlaceholder: { flex: 1, fontSize: 15, color: '#999' },
+  searchPlaceholder: { flex: 1, fontSize: 14, color: '#bcbcbc' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { paddingHorizontal: 10, paddingBottom: 20 },
   postCard: {
