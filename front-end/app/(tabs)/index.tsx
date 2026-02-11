@@ -311,7 +311,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/search')}
               activeOpacity={0.8}
             >
-              <Ionicons name="search-outline" size={23} color="#bebebe" />
+              <Ionicons name="search" size={23} color="#bebebe" />
               <Text style={styles.searchPlaceholder}>发现更多...</Text>
               <Ionicons name="mic" size={23} color="#777777" />
             </TouchableOpacity>
