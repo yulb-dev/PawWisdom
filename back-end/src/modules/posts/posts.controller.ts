@@ -218,6 +218,24 @@ export class PostsController {
   }
 
   /**
+   * 获取当前用户与动态的交互状态
+   * GET /api/posts/:id/interactions
+   */
+  @Get(':id/interactions')
+  @UseGuards(JwtAuthGuard)
+  async getInteractionStatus(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{
+    isLiked: boolean;
+    isFavorited: boolean;
+    isFollowingAuthor: boolean;
+  }> {
+    const userId = req.user.userId;
+    return this.postsService.getPostInteractionStatus(id, userId);
+  }
+
+  /**
    * 分享动态
    * POST /api/posts/:id/share
    */

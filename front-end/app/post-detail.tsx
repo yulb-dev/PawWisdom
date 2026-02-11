@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postService } from '../services/post.service';
 import { commentService } from '../services/comment.service';
+import { followService } from '../services/follow.service';
+import { useAuthStore } from '../store/auth.store';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_WIDTH;
@@ -30,12 +32,13 @@ export default function PostDetailScreen() {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const queryClient = useQueryClient();
+  const { isAuthenticated, user } = useAuthStore();
 
   const postId = params.id as string;
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [commentText, setCommentText] = useState('');
-  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentLikeStatusMap, setCommentLikeStatusMap] = useState<Record<string, boolean>>({});
 
   // 获取动态详情
   const { data: post, isLoading } = useQuery({
@@ -51,10 +54,47 @@ export default function PostDetailScreen() {
     enabled: !!postId,
   });
 
+  const { data: interactionStatus } = useQuery({
+    queryKey: ['post-interactions', postId],
+    queryFn: () => postService.getInteractionStatus(postId),
+    enabled: !!postId && isAuthenticated,
+  });
+
+  const comments = React.useMemo(() => commentsData?.data || [], [commentsData?.data]);
+
+  useEffect(() => {
+    if (!isAuthenticated || comments.length === 0) {
+      setCommentLikeStatusMap({});
+      return;
+    }
+
+    let cancelled = false;
+    const loadStatus = async () => {
+      const entries = await Promise.all(
+        comments.map(async (comment) => {
+          try {
+            const isLiked = await commentService.checkLikeStatus(comment.id);
+            return [comment.id, isLiked] as const;
+          } catch {
+            return [comment.id, false] as const;
+          }
+        }),
+      );
+      if (!cancelled) {
+        setCommentLikeStatusMap(Object.fromEntries(entries));
+      }
+    };
+
+    loadStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, comments]);
+
   // 点赞/取消点赞
   const likeMutation = useMutation({
     mutationFn: async () => {
-      const isLiked = await postService.checkLikeStatus(postId);
+      const isLiked = interactionStatus?.isLiked || false;
       if (isLiked) {
         await postService.unlikePost(postId);
       } else {
@@ -63,6 +103,27 @@ export default function PostDetailScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['post-interactions', postId] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!post?.user?.id) return;
+      const isFollowing = interactionStatus?.isFollowingAuthor || false;
+      if (isFollowing) {
+        await followService.unfollowUser(post.user.id);
+      } else {
+        await followService.followUser(post.user.id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['post-interactions', postId] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+    onError: (error: any) => {
+      Alert.alert('操作失败', error?.response?.data?.message || '请稍后重试');
     },
   });
 
@@ -76,6 +137,8 @@ export default function PostDetailScreen() {
     onSuccess: () => {
       setCommentText('');
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
       Alert.alert('成功', '评论发布成功');
     },
     onError: () => {
@@ -91,42 +154,47 @@ export default function PostDetailScreen() {
   });
 
   const handleShare = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
     try {
       await postService.sharePost(postId);
       Alert.alert('成功', '分享成功');
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    } catch {
       Alert.alert('错误', '分享失败');
     }
   };
 
-  const toggleCommentExpand = (commentId: string) => {
-    setExpandedComments((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(commentId)) {
-        newSet.delete(commentId);
-      } else {
-        newSet.add(commentId);
-      }
-      return newSet;
-    });
-  };
-
   const handleCommentLike = async (commentId: string) => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
     try {
-      await commentService.likeComment(commentId);
-      queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-    } catch (error) {
-      // 可能已点赞，尝试取消点赞
-      try {
+      const isLiked = commentLikeStatusMap[commentId] || false;
+      if (isLiked) {
         await commentService.unlikeComment(commentId);
-        queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-      } catch (e) {
-        Alert.alert('错误', '操作失败');
+      } else {
+        await commentService.likeComment(commentId);
       }
+      setCommentLikeStatusMap((prev) => ({
+        ...prev,
+        [commentId]: !isLiked,
+      }));
+      queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+    } catch {
+      Alert.alert('错误', '操作失败');
     }
   };
 
   const handleSendComment = () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
     if (commentText.trim()) {
       commentMutation.mutate(commentText.trim());
     }
@@ -141,6 +209,11 @@ export default function PostDetailScreen() {
     });
   };
 
+  const getAvatarSource = (avatarUrl?: string | null) =>
+    typeof avatarUrl === 'string' && avatarUrl.trim().length > 0
+      ? { uri: avatarUrl }
+      : require('../assets/images/default_avatar.webp');
+
   if (isLoading || !post) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -151,7 +224,11 @@ export default function PostDetailScreen() {
     );
   }
 
-  const comments = commentsData?.data || [];
+  const mediaUrls = (Array.isArray(post.mediaUrls) ? post.mediaUrls : []).filter(
+    (url): url is string => typeof url === 'string' && url.trim().length > 0
+  );
+  const isVideo = post.mediaType === 'video';
+  const canFollow = !!post.user?.id && post.user.id !== user?.id;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -178,9 +255,7 @@ export default function PostDetailScreen() {
 
           <View style={styles.headerCenter}>
             <RNImage
-              source={{
-                uri: post.user?.avatarUrl || require('../assets/images/default_avatar.webp'),
-              }}
+              source={getAvatarSource(post.user?.avatarUrl)}
               style={styles.headerAvatar}
             />
             <Text style={styles.headerUsername} numberOfLines={1}>
@@ -189,9 +264,25 @@ export default function PostDetailScreen() {
           </View>
 
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.followButton} onPress={() => Alert.alert('提示', '关注功能开发中')}>
-              <Text style={styles.followButtonText}>关注</Text>
-            </TouchableOpacity>
+            {canFollow && (
+              <TouchableOpacity
+                style={[
+                  styles.followButton,
+                  interactionStatus?.isFollowingAuthor && styles.followButtonFollowing,
+                ]}
+                onPress={() => followMutation.mutate()}
+                disabled={followMutation.isPending}
+              >
+                <Text
+                  style={[
+                    styles.followButtonText,
+                    interactionStatus?.isFollowingAuthor && styles.followButtonTextFollowing,
+                  ]}
+                >
+                  {interactionStatus?.isFollowingAuthor ? '已关注' : '关注'}
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
               <Ionicons name="share-outline" size={24} color="#111827" />
             </TouchableOpacity>
@@ -207,7 +298,7 @@ export default function PostDetailScreen() {
           scrollEventThrottle={16}
         >
           {/* 图片轮播 */}
-          {post.mediaUrls && post.mediaUrls.length > 0 && (
+          {mediaUrls.length > 0 && !isVideo && (
             <View style={styles.imageContainer}>
               <ScrollView
                 horizontal
@@ -218,7 +309,7 @@ export default function PostDetailScreen() {
                   setCurrentImageIndex(index);
                 }}
               >
-                {post.mediaUrls.map((image, index) => (
+                {mediaUrls.map((image, index) => (
                   <RNImage
                     key={index}
                     source={{ uri: image }}
@@ -227,13 +318,25 @@ export default function PostDetailScreen() {
                   />
                 ))}
               </ScrollView>
-              {post.mediaUrls.length > 1 && (
+              {mediaUrls.length > 1 && (
                 <View style={styles.imageIndicator}>
                   <Text style={styles.imageIndicatorText}>
-                    {currentImageIndex + 1}/{post.mediaUrls.length}
+                    {currentImageIndex + 1}/{mediaUrls.length}
                   </Text>
                 </View>
               )}
+            </View>
+          )}
+          {isVideo && (mediaUrls[0] || post.coverImageUrl) && (
+            <View style={styles.imageContainer}>
+              <RNImage
+                source={{ uri: post.coverImageUrl || mediaUrls[0] }}
+                style={styles.postImage}
+                resizeMode="cover"
+              />
+              <View style={styles.videoOverlay}>
+                <Ionicons name="play" size={40} color="#fff" />
+              </View>
             </View>
           )}
 
@@ -247,6 +350,21 @@ export default function PostDetailScreen() {
 
             {/* 发布日期 */}
             <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
+
+            <View style={styles.postActions}>
+              <TouchableOpacity style={styles.postActionBtn} onPress={() => likeMutation.mutate()}>
+                <Ionicons
+                  name={interactionStatus?.isLiked ? 'thumbs-up' : 'thumbs-up-outline'}
+                  size={21}
+                  color={interactionStatus?.isLiked ? '#FF6B6B' : '#999'}
+                />
+                <Text style={styles.postActionText}>{post.likeCount}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.postActionBtn} onPress={handleShare}>
+                <Ionicons name="share-social-outline" size={21} color="#999" />
+                <Text style={styles.postActionText}>{post.shareCount}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* 评论区域 */}
@@ -256,11 +374,7 @@ export default function PostDetailScreen() {
             {comments.map((comment) => (
               <View key={comment.id} style={styles.commentItem}>
                 <RNImage
-                  source={
-                    comment.user?.avatarUrl
-                      ? { uri: comment.user.avatarUrl }
-                      : require('../assets/images/default_avatar.webp')
-                  }
+                  source={getAvatarSource(comment.user?.avatarUrl)}
                   style={styles.commentAvatar}
                 />
                 <View style={styles.commentContent}>
@@ -280,7 +394,11 @@ export default function PostDetailScreen() {
                     <Text style={styles.commentTime}>{formatDate(comment.createdAt)}</Text>
                     <TouchableOpacity onPress={() => handleCommentLike(comment.id)}>
                       <View style={styles.commentAction}>
-                        <Ionicons name="heart-outline" size={16} color="#999" />
+                        <Ionicons
+                          name={commentLikeStatusMap[comment.id] ? 'heart' : 'heart-outline'}
+                          size={16}
+                          color={commentLikeStatusMap[comment.id] ? '#FF6B6B' : '#999'}
+                        />
                         {comment.likeCount > 0 && (
                           <Text style={styles.commentActionText}>{comment.likeCount}</Text>
                         )}
@@ -382,10 +500,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
   },
+  followButtonFollowing: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ffd0d0',
+  },
   followButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#fff',
+  },
+  followButtonTextFollowing: {
+    color: '#FF6B6B',
   },
   scrollView: {
     flex: 1,
@@ -414,6 +540,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  videoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
   contentContainer: {
     padding: 16,
   },
@@ -432,6 +564,22 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 13,
+    color: '#999',
+  },
+  postActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 12,
+  },
+  postActionBtn: {
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  postActionText: {
+    fontSize: 14,
     color: '#999',
   },
   commentsSection: {

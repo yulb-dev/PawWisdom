@@ -32,7 +32,7 @@ export class CreatePostDto {
 
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(9)
+  @ArrayMaxSize(6)
   @IsOptional()
   mediaUrls?: string[];
 

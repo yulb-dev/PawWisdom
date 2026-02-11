@@ -40,6 +40,9 @@ export interface Post {
     id: string;
     name: string;
   }[];
+  isLiked?: boolean;
+  isFavorited?: boolean;
+  isFollowingAuthor?: boolean;
 }
 
 export interface CreatePostRequest {
@@ -253,6 +256,22 @@ class PostService {
       `/posts/${id}/favorite/status`,
     );
     return response.data.isFavorited;
+  }
+
+  /**
+   * 获取动态交互状态（点赞/收藏/关注作者）
+   */
+  async getInteractionStatus(id: string): Promise<{
+    isLiked: boolean;
+    isFavorited: boolean;
+    isFollowingAuthor: boolean;
+  }> {
+    const response = await api.get<{
+      isLiked: boolean;
+      isFavorited: boolean;
+      isFollowingAuthor: boolean;
+    }>(`/posts/${id}/interactions`);
+    return response.data;
   }
 }
 

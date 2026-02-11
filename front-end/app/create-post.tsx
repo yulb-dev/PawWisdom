@@ -10,14 +10,17 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image as RNImage,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import ImagePicker, {
   SelectedImage,
 } from '../components/upload/ImagePicker';
 import { uploadService } from '../services/upload.service';
 import { postService } from '../services/post.service';
+import { petService } from '../services/pet.service';
 
 export default function CreatePostScreen() {
   const router = useRouter();
@@ -25,10 +28,16 @@ export default function CreatePostScreen() {
 
   const [content, setContent] = useState('');
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string | undefined>();
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+
+  const { data: myPets = [] } = useQuery({
+    queryKey: ['my-pets-for-post'],
+    queryFn: () => petService.getMyPets(),
+  });
 
   // 从AI情绪识别页面传来的数据
   const preloadedImageUrl = params.imageUrl as string;
@@ -92,7 +101,22 @@ export default function CreatePostScreen() {
   // 发布动态
   const handlePublish = async () => {
     if (!content.trim() && selectedImages.length === 0) {
-      Alert.alert('提示', '请输入内容或上传图片');
+      Alert.alert('提示', '请输入内容或上传媒体');
+      return;
+    }
+
+    const hasVideo = selectedImages.some((item) => item.type === 'video');
+    const hasImage = selectedImages.some((item) => item.type === 'image');
+    if (hasVideo && hasImage) {
+      Alert.alert('提示', '不支持同时选择图片和视频');
+      return;
+    }
+    if (selectedImages.filter((item) => item.type === 'video').length > 1) {
+      Alert.alert('提示', '发布动态仅支持一个视频');
+      return;
+    }
+    if (hasImage && selectedImages.length > 6) {
+      Alert.alert('提示', '发布动态最多上传6张图片');
       return;
     }
 
@@ -134,8 +158,14 @@ export default function CreatePostScreen() {
       // 发布动态
       setPublishing(true);
       await postService.createPost({
+        petId: selectedPetId,
         content: content.trim(),
-        mediaType: selectedImages.length > 0 ? 'image' : undefined,
+        mediaType:
+          selectedImages.length > 0
+            ? selectedImages[0].type === 'video'
+              ? 'video'
+              : 'image'
+            : undefined,
         mediaUrls: allUrls.length > 0 ? allUrls : undefined,
         hashtags: allHashtags.length > 0 ? allHashtags : undefined,
         aiAnalysis:
@@ -215,10 +245,75 @@ export default function CreatePostScreen() {
         {/* 图片选择 */}
         <View style={styles.section}>
           <ImagePicker
-            maxImages={9}
+            maxImages={6}
             onImagesSelected={handleImagesSelected}
             initialImages={selectedImages}
           />
+          <Text style={styles.mediaTip}>支持最多6张图片或1个视频，不支持混选</Text>
+        </View>
+
+        {/* 关联宠物 */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="paw" size={20} color="#666" />
+            <Text style={styles.sectionTitle}>关联宠物档案</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <TouchableOpacity
+              style={[
+                styles.petChip,
+                !selectedPetId && styles.petChipActive,
+              ]}
+              onPress={() => setSelectedPetId(undefined)}
+              disabled={isLoading}
+            >
+              <Text
+                style={[
+                  styles.petChipText,
+                  !selectedPetId && styles.petChipTextActive,
+                ]}
+              >
+                不关联
+              </Text>
+            </TouchableOpacity>
+            {myPets.map((pet) => {
+              const isActive = selectedPetId === pet.id;
+              return (
+                <TouchableOpacity
+                  key={pet.id}
+                  style={[styles.petChip, isActive && styles.petChipActive]}
+                  onPress={() => setSelectedPetId(pet.id)}
+                  disabled={isLoading}
+                >
+                  <RNImage
+                    source={
+                      pet.avatarUrl
+                        ? { uri: pet.avatarUrl }
+                        : require('../assets/images/default_avatar.webp')
+                    }
+                    style={styles.petAvatar}
+                  />
+                  <View>
+                    <Text
+                      style={[
+                        styles.petChipText,
+                        isActive && styles.petChipTextActive,
+                      ]}
+                    >
+                      {pet.name}
+                    </Text>
+                    <Text style={styles.petChipSubText}>
+                      {pet.species === 'cat'
+                        ? '猫'
+                        : pet.species === 'dog'
+                          ? '狗'
+                          : '其他'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
         {/* 话题标签 */}
@@ -336,6 +431,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },
+  mediaTip: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#999',
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -385,5 +485,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     lineHeight: 18,
+  },
+  petChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    backgroundColor: '#fff',
+    minHeight: 44,
+  },
+  petChipActive: {
+    borderColor: '#FF6B6B',
+    backgroundColor: '#FFF5F5',
+  },
+  petChipText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  petChipTextActive: {
+    color: '#FF6B6B',
+    fontWeight: '600',
+  },
+  petChipSubText: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+  petAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
   },
 });

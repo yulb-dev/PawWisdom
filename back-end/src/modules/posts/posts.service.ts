@@ -3,13 +3,16 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
-import { Post } from '../../entities/post.entity';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { Post, MediaType } from '../../entities/post.entity';
 import { Hashtag } from '../../entities/hashtag.entity';
 import { PostLike } from '../../entities/post-like.entity';
 import { PostFavorite } from '../../entities/post-favorite.entity';
+import { UserFollow } from '../../entities/user-follow.entity';
+import { Pet } from '../../entities/pet.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { QueryPostsDto, PostSortBy } from './dto/query-posts.dto';
@@ -33,6 +36,10 @@ export class PostsService {
     private postLikeRepository: Repository<PostLike>,
     @InjectRepository(PostFavorite)
     private postFavoriteRepository: Repository<PostFavorite>,
+    @InjectRepository(UserFollow)
+    private userFollowRepository: Repository<UserFollow>,
+    @InjectRepository(Pet)
+    private petRepository: Repository<Pet>,
   ) {}
 
   /**
@@ -41,6 +48,9 @@ export class PostsService {
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
     // 提取hashtags，避免传递给create
     const { hashtags: hashtagNames, ...postData } = createPostDto;
+
+    this.validateMediaPayload(postData.mediaType, postData.mediaUrls);
+    await this.ensurePetOwnership(postData.petId, userId);
 
     // 创建动态实体
     const post = this.postRepository.create({
@@ -263,13 +273,43 @@ export class PostsService {
     page: number = 1,
     limit: number = 20,
   ): Promise<PaginatedPostsResult> {
-    // TODO: 实现关注功能后，这里需要查询关注用户的动态
-    // 目前返回所有最新动态
-    return this.findAll({
+    const followingRelations = await this.userFollowRepository.find({
+      where: { followerId: userId },
+      select: ['followingId'],
+    });
+
+    const followingUserIds = followingRelations.map((item) => item.followingId);
+    if (followingUserIds.length === 0) {
+      return {
+        data: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      };
+    }
+
+    const [data, total] = await this.postRepository.findAndCount({
+      where: {
+        userId: In(followingUserIds),
+        isDeleted: false,
+        isDraft: false,
+      },
+      relations: ['user', 'pet', 'hashtags'],
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
       page,
       limit,
-      sortBy: PostSortBy.LATEST,
-    });
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -304,6 +344,7 @@ export class PostsService {
    * 增加分享数
    */
   async incrementShareCount(postId: string): Promise<void> {
+    await this.ensurePostExists(postId);
     await this.postRepository.increment({ id: postId }, 'shareCount', 1);
   }
 
@@ -342,6 +383,8 @@ export class PostsService {
    * 点赞动态（创建点赞记录）
    */
   async likePost(postId: string, userId: string): Promise<void> {
+    await this.ensurePostExists(postId);
+
     // 检查是否已点赞
     const existingLike = await this.postLikeRepository.findOne({
       where: { postId, userId },
@@ -354,12 +397,15 @@ export class PostsService {
     // 创建点赞记录
     const like = this.postLikeRepository.create({ postId, userId });
     await this.postLikeRepository.save(like);
+    await this.incrementLikeCount(postId);
   }
 
   /**
    * 取消点赞
    */
   async unlikePost(postId: string, userId: string): Promise<void> {
+    await this.ensurePostExists(postId);
+
     const like = await this.postLikeRepository.findOne({
       where: { postId, userId },
     });
@@ -369,6 +415,7 @@ export class PostsService {
     }
 
     await this.postLikeRepository.remove(like);
+    await this.decrementLikeCount(postId);
   }
 
   /**
@@ -385,6 +432,8 @@ export class PostsService {
    * 收藏动态
    */
   async favoritePost(postId: string, userId: string): Promise<void> {
+    await this.ensurePostExists(postId);
+
     // 检查是否已收藏
     const existingFavorite = await this.postFavoriteRepository.findOne({
       where: { postId, userId },
@@ -397,12 +446,15 @@ export class PostsService {
     // 创建收藏记录
     const favorite = this.postFavoriteRepository.create({ postId, userId });
     await this.postFavoriteRepository.save(favorite);
+    await this.postRepository.increment({ id: postId }, 'favoriteCount', 1);
   }
 
   /**
    * 取消收藏
    */
   async unfavoritePost(postId: string, userId: string): Promise<void> {
+    await this.ensurePostExists(postId);
+
     const favorite = await this.postFavoriteRepository.findOne({
       where: { postId, userId },
     });
@@ -412,6 +464,7 @@ export class PostsService {
     }
 
     await this.postFavoriteRepository.remove(favorite);
+    await this.postRepository.decrement({ id: postId }, 'favoriteCount', 1);
   }
 
   /**
@@ -524,5 +577,81 @@ export class PostsService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async getPostInteractionStatus(
+    postId: string,
+    userId: string,
+  ): Promise<{
+    isLiked: boolean;
+    isFavorited: boolean;
+    isFollowingAuthor: boolean;
+  }> {
+    const post = await this.findOne(postId);
+
+    const [isLiked, isFavorited, isFollowingAuthor] = await Promise.all([
+      this.isPostLikedByUser(postId, userId),
+      this.isPostFavoritedByUser(postId, userId),
+      post.userId === userId
+        ? Promise.resolve(false)
+        : this.userFollowRepository
+            .findOne({
+              where: {
+                followerId: userId,
+                followingId: post.userId,
+              },
+            })
+            .then((relation) => !!relation),
+    ]);
+
+    return { isLiked, isFavorited, isFollowingAuthor };
+  }
+
+  private async ensurePostExists(postId: string): Promise<void> {
+    const post = await this.postRepository.findOne({
+      where: { id: postId, isDeleted: false },
+      select: ['id'],
+    });
+    if (!post) {
+      throw new NotFoundException('动态不存在');
+    }
+  }
+
+  private async ensurePetOwnership(
+    petId: string | undefined,
+    userId: string,
+  ): Promise<void> {
+    if (!petId) return;
+
+    const pet = await this.petRepository.findOne({
+      where: { id: petId },
+      select: ['id', 'ownerId'],
+    });
+
+    if (!pet) {
+      throw new NotFoundException('关联宠物不存在');
+    }
+    if (pet.ownerId !== userId) {
+      throw new ForbiddenException('只能关联自己的宠物档案');
+    }
+  }
+
+  private validateMediaPayload(
+    mediaType: Post['mediaType'],
+    mediaUrls?: string[],
+  ): void {
+    if (!mediaType) return;
+
+    const mediaCount = mediaUrls?.length ?? 0;
+    if (mediaCount === 0) {
+      throw new BadRequestException('存在媒体类型时必须提供媒体资源');
+    }
+
+    if (mediaType === MediaType.IMAGE && mediaCount > 6) {
+      throw new BadRequestException('图片最多上传6张');
+    }
+    if (mediaType === MediaType.VIDEO && mediaCount !== 1) {
+      throw new BadRequestException('视频仅支持上传1个');
+    }
   }
 }

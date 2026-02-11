@@ -137,8 +137,11 @@ export class CommentsController {
   @HttpPost(':id/like')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async like(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.commentsService.incrementLikeCount(id);
+  async like(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    await this.commentsService.likeComment(id, req.user.userId);
     return { success: true };
   }
 
@@ -149,8 +152,28 @@ export class CommentsController {
   @Delete(':id/like')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async unlike(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.commentsService.decrementLikeCount(id);
+  async unlike(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    await this.commentsService.unlikeComment(id, req.user.userId);
     return { success: true };
+  }
+
+  /**
+   * 检查评论点赞状态
+   * GET /api/comments/:id/like/status
+   */
+  @Get(':id/like/status')
+  @UseGuards(JwtAuthGuard)
+  async getLikeStatus(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ isLiked: boolean }> {
+    const isLiked = await this.commentsService.isCommentLikedByUser(
+      id,
+      req.user.userId,
+    );
+    return { isLiked };
   }
 }

@@ -2,13 +2,16 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Comment } from '../../entities/comment.entity';
+import { CommentLike } from '../../entities/comment-like.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { QueryCommentsDto } from './dto/query-comments.dto';
+import { PostsService } from '../posts/posts.service';
 
 export interface PaginatedCommentsResult {
   data: Comment[];
@@ -23,6 +26,9 @@ export class CommentsService {
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
+    @InjectRepository(CommentLike)
+    private readonly commentLikeRepository: Repository<CommentLike>,
+    private readonly postsService: PostsService,
   ) {}
 
   /**
@@ -36,7 +42,9 @@ export class CommentsService {
       ...createCommentDto,
       userId,
     });
-    return this.commentRepository.save(comment);
+    const savedComment = await this.commentRepository.save(comment);
+    await this.postsService.incrementCommentCount(createCommentDto.postId);
+    return savedComment;
   }
 
   /**
@@ -146,6 +154,7 @@ export class CommentsService {
     comment.isDeleted = true;
     comment.deletedAt = new Date();
     await this.commentRepository.save(comment);
+    await this.postsService.decrementCommentCount(comment.postId);
   }
 
   /**
@@ -169,14 +178,45 @@ export class CommentsService {
   /**
    * 点赞评论
    */
-  async incrementLikeCount(id: string): Promise<void> {
+  async likeComment(id: string, userId: string): Promise<void> {
+    await this.findOne(id);
+
+    const existing = await this.commentLikeRepository.findOne({
+      where: { commentId: id, userId },
+    });
+    if (existing) {
+      throw new ConflictException('您已点赞该评论');
+    }
+
+    const relation = this.commentLikeRepository.create({
+      commentId: id,
+      userId,
+    });
+    await this.commentLikeRepository.save(relation);
     await this.commentRepository.increment({ id }, 'likeCount', 1);
   }
 
   /**
    * 取消点赞
    */
-  async decrementLikeCount(id: string): Promise<void> {
+  async unlikeComment(id: string, userId: string): Promise<void> {
+    await this.findOne(id);
+
+    const existing = await this.commentLikeRepository.findOne({
+      where: { commentId: id, userId },
+    });
+    if (!existing) {
+      throw new NotFoundException('评论点赞记录不存在');
+    }
+
+    await this.commentLikeRepository.remove(existing);
     await this.commentRepository.decrement({ id }, 'likeCount', 1);
+  }
+
+  async isCommentLikedByUser(id: string, userId: string): Promise<boolean> {
+    const relation = await this.commentLikeRepository.findOne({
+      where: { commentId: id, userId },
+    });
+    return !!relation;
   }
 }

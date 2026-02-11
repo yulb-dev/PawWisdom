@@ -10,6 +10,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { AiModule } from './modules/ai/ai.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { CommentsModule } from './modules/comments/comments.module';
+import { FollowsModule } from './modules/follows/follows.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -31,6 +32,7 @@ import { AppService } from './app.service';
     AiModule,
     PostsModule,
     CommentsModule,
+    FollowsModule,
   ],
   controllers: [AppController],
   providers: [

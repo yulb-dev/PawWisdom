@@ -24,6 +24,7 @@ export interface Comment {
     username: string;
     nickname?: string;
   };
+  isLiked?: boolean;
 }
 
 export interface CreateCommentRequest {
@@ -109,6 +110,16 @@ class CommentService {
    */
   async unlikeComment(id: string): Promise<void> {
     await api.delete(`/comments/${id}/like`);
+  }
+
+  /**
+   * 检查评论点赞状态
+   */
+  async checkLikeStatus(id: string): Promise<boolean> {
+    const response = await api.get<{ isLiked: boolean }>(
+      `/comments/${id}/like/status`,
+    );
+    return response.data.isLiked;
   }
 
   /**
