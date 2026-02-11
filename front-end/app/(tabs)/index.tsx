@@ -303,15 +303,17 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
-          <Animated.View style={[styles.searchBarContainer, { opacity: searchBarOpacity }]}>
+          <Animated.View
+            style={[styles.searchBarContainer, { opacity: searchBarOpacity }]}
+          >
             <TouchableOpacity
               style={styles.searchBar}
               onPress={() => router.push('/search')}
               activeOpacity={0.8}
             >
-              <Ionicons name="search-outline" size={20} color="#999" />
+              <Ionicons name="search-outline" size={24} color="#999" />
               <Text style={styles.searchPlaceholder}>发现更多...</Text>
-              <Ionicons name="mic-outline" size={20} color="#999" />
+              <Ionicons name="mic-outline" size={24} color="#999" />
             </TouchableOpacity>
           </Animated.View>
         }
@@ -545,14 +547,14 @@ const styles = StyleSheet.create({
     width: 80,
     justifyContent: 'flex-end'
   },
-  searchBarContainer: { paddingHorizontal: 16, overflow: 'hidden' },
+  searchBarContainer: { paddingHorizontal: 16, overflow: 'hidden', marginBottom: 10 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fafafa',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     gap: 8
   },
   searchPlaceholder: { flex: 1, fontSize: 15, color: '#999' },
