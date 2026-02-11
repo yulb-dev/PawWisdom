@@ -216,11 +216,6 @@ export default function HomeScreen() {
     outputRange: [1, 0],
     extrapolate: 'clamp'
   })
-  const searchBarTranslateY = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, -56],
-    extrapolate: 'clamp'
-  })
   const searchIconOpacity = scrollY.interpolate({
     inputRange: [0, 50],
     outputRange: [0, 1],
@@ -300,26 +295,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
-        <Animated.View
-          style={[
-            styles.searchBarContainer,
-            {
-              opacity: searchBarOpacity,
-              transform: [{ translateY: searchBarTranslateY }]
-            }
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.searchBar}
-            onPress={() => router.push('/search')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="search-outline" size={20} color="#999" />
-            <Text style={styles.searchPlaceholder}>发现更多...</Text>
-            <Ionicons name="mic-outline" size={20} color="#999" />
-          </TouchableOpacity>
-        </Animated.View>
       </View>
 
       <Animated.FlatList
@@ -327,6 +302,19 @@ export default function HomeScreen() {
         renderItem={renderPostItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <Animated.View style={[styles.searchBarContainer, { opacity: searchBarOpacity }]}>
+            <TouchableOpacity
+              style={styles.searchBar}
+              onPress={() => router.push('/search')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="search-outline" size={20} color="#999" />
+              <Text style={styles.searchPlaceholder}>发现更多...</Text>
+              <Ionicons name="mic-outline" size={20} color="#999" />
+            </TouchableOpacity>
+          </Animated.View>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -337,7 +325,7 @@ export default function HomeScreen() {
         ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: false
+          useNativeDriver: true
         })}
         scrollEventThrottle={16}
       />
@@ -529,10 +517,14 @@ const styles = StyleSheet.create({
     gap: 24
   },
   tabButton: { alignItems: 'center', paddingVertical: 4 },
-  tabInner: { alignItems: 'center' },
-  tabText: { fontSize: 20, fontWeight: '600', color: '#999' },
+  tabInner: { alignItems: 'center', position: 'relative', paddingBottom: 10 },
+  tabText: { fontSize: 20, lineHeight: 28, fontWeight: '600', color: '#999' },
   tabTextActive: { fontWeight: '700', color: '#111827' },
   tabIndicatorWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     height: 10,
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -553,7 +545,7 @@ const styles = StyleSheet.create({
     width: 80,
     justifyContent: 'flex-end'
   },
-  searchBarContainer: { paddingHorizontal: 16, paddingBottom: 12, overflow: 'hidden' },
+  searchBarContainer: { paddingHorizontal: 16, overflow: 'hidden' },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
