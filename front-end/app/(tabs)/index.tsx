@@ -9,7 +9,7 @@ import {
   Image as RNImage,
   Dimensions,
   Animated,
-  Alert
+  Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
@@ -24,11 +24,15 @@ import { useAuthStore } from '../../store/auth.store'
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const CARD_HORIZONTAL = 16
 const CARD_WIDTH = SCREEN_WIDTH - CARD_HORIZONTAL * 2
-const CARD_LIST_HORIZONTAL_PADDING = 10
-const CARD_MEDIA_HORIZONTAL_PADDING = 12
-const GRID_GAP = 6
+// Reduce paddings/gap to make three-column images larger while keeping 3 columns
+const CARD_LIST_HORIZONTAL_PADDING = 8
+const CARD_MEDIA_HORIZONTAL_PADDING = 8
+const GRID_GAP = 5
 const GRID_CONTENT_WIDTH =
-  SCREEN_WIDTH - CARD_LIST_HORIZONTAL_PADDING * 2 - CARD_MEDIA_HORIZONTAL_PADDING * 2
+  SCREEN_WIDTH -
+  CARD_LIST_HORIZONTAL_PADDING * 2 -
+  CARD_MEDIA_HORIZONTAL_PADDING * 2
+// Keep three columns but with larger item size due to reduced paddings/gap
 const GRID_SIZE = Math.floor((GRID_CONTENT_WIDTH - GRID_GAP * 2) / 3)
 
 type TabType = 'discover' | 'local'
@@ -49,13 +53,13 @@ export default function HomeScreen() {
   const {
     data: postsData,
     isLoading,
-    refetch
+    refetch,
   } = useQuery({
     queryKey: ['posts', 'recommended', activeTab],
     queryFn: () =>
       activeTab === 'discover'
         ? postService.getRecommendedFeed(1, 20)
-        : postService.getFollowingFeed(1, 20)
+        : postService.getFollowingFeed(1, 20),
   })
 
   const posts = useMemo(() => postsData?.data || [], [postsData?.data])
@@ -76,10 +80,10 @@ export default function HomeScreen() {
           } catch {
             return [
               post.id,
-              { isLiked: false, isFavorited: false, isFollowingAuthor: false }
+              { isLiked: false, isFavorited: false, isFollowingAuthor: false },
             ] as const
           }
-        })
+        }),
       )
       if (!cancelled) {
         setInteractionMap(Object.fromEntries(entries))
@@ -113,14 +117,14 @@ export default function HomeScreen() {
         ...prev,
         [postId]: {
           ...prev[postId],
-          isLiked: nextLiked
-        }
+          isLiked: nextLiked,
+        },
       }))
       queryClient.invalidateQueries({ queryKey: ['posts'] })
     },
     onError: (error: any) => {
       Alert.alert('操作失败', error?.response?.data?.message || '请稍后重试')
-    }
+    },
   })
 
   const followMutation = useMutation({
@@ -148,7 +152,7 @@ export default function HomeScreen() {
               ...next[item.id],
               isFollowingAuthor: nextFollowing,
               isLiked: next[item.id]?.isLiked || false,
-              isFavorited: next[item.id]?.isFavorited || false
+              isFavorited: next[item.id]?.isFavorited || false,
             }
           }
         })
@@ -157,7 +161,7 @@ export default function HomeScreen() {
     },
     onError: (error: any) => {
       Alert.alert('操作失败', error?.response?.data?.message || '请稍后重试')
-    }
+    },
   })
 
   const handleLike = (post: Post) => {
@@ -214,12 +218,12 @@ export default function HomeScreen() {
   const searchBarOpacity = scrollY.interpolate({
     inputRange: [0, 50],
     outputRange: [1, 0],
-    extrapolate: 'clamp'
+    extrapolate: 'clamp',
   })
   const searchIconOpacity = scrollY.interpolate({
     inputRange: [0, 50],
     outputRange: [0, 1],
-    extrapolate: 'clamp'
+    extrapolate: 'clamp',
   })
 
   if (isLoading) {
@@ -248,7 +252,7 @@ export default function HomeScreen() {
                 <Text
                   style={[
                     styles.tabText,
-                    activeTab === 'discover' && styles.tabTextActive
+                    activeTab === 'discover' && styles.tabTextActive,
                   ]}
                 >
                   发现
@@ -257,7 +261,7 @@ export default function HomeScreen() {
                   <View
                     style={[
                       styles.tabIndicator,
-                      activeTab === 'discover' && styles.tabIndicatorActive
+                      activeTab === 'discover' && styles.tabIndicatorActive,
                     ]}
                   />
                 </View>
@@ -269,7 +273,10 @@ export default function HomeScreen() {
             >
               <View style={styles.tabInner}>
                 <Text
-                  style={[styles.tabText, activeTab === 'local' && styles.tabTextActive]}
+                  style={[
+                    styles.tabText,
+                    activeTab === 'local' && styles.tabTextActive,
+                  ]}
                 >
                   关注
                 </Text>
@@ -277,7 +284,7 @@ export default function HomeScreen() {
                   <View
                     style={[
                       styles.tabIndicator,
-                      activeTab === 'local' && styles.tabIndicatorActive
+                      activeTab === 'local' && styles.tabIndicatorActive,
                     ]}
                   />
                 </View>
@@ -287,11 +294,15 @@ export default function HomeScreen() {
           <View style={styles.rightIcons}>
             <Animated.View style={{ opacity: searchIconOpacity }}>
               <TouchableOpacity onPress={() => router.push('/search')}>
-                <Ionicons name="search-outline" size={24} color="#111827" />
+                <Ionicons name="search-outline" size={22} color="#111827" />
               </TouchableOpacity>
             </Animated.View>
             <TouchableOpacity onPress={() => router.push('/message')}>
-              <Ionicons name="notifications-outline" size={26} color="#111827" />
+              <Ionicons
+                name="notifications-outline"
+                size={22}
+                color="#111827"
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -326,9 +337,12 @@ export default function HomeScreen() {
         }
         ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: true
-        })}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: true,
+          },
+        )}
         scrollEventThrottle={16}
       />
     </SafeAreaView>
@@ -343,11 +357,15 @@ function PostCard({
   onLike,
   onComment,
   onShare,
-  onFollow
+  onFollow,
 }: {
   post: Post
   currentUserId?: string
-  interactions?: { isLiked: boolean; isFavorited: boolean; isFollowingAuthor: boolean }
+  interactions?: {
+    isLiked: boolean
+    isFavorited: boolean
+    isFollowingAuthor: boolean
+  }
   onPress: () => void
   onLike: () => void
   onComment: () => void
@@ -357,9 +375,12 @@ function PostCard({
   const mediaUrls = useMemo(
     () =>
       (Array.isArray(post.mediaUrls) ? post.mediaUrls : [])
-        .filter((url): url is string => typeof url === 'string' && url.trim().length > 0)
+        .filter(
+          (url): url is string =>
+            typeof url === 'string' && url.trim().length > 0,
+        )
         .slice(0, 6),
-    [post.mediaUrls]
+    [post.mediaUrls],
   )
 
   const isVideo = post.mediaType === 'video'
@@ -368,7 +389,11 @@ function PostCard({
   const showFollow = !!post.user?.id && post.user.id !== currentUserId
 
   return (
-    <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.92}>
+    <TouchableOpacity
+      style={styles.postCard}
+      onPress={onPress}
+      activeOpacity={0.92}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.authorWrap}>
           <RNImage
@@ -460,7 +485,9 @@ function PostCard({
             style={styles.actionIcon}
             contentFit="contain"
           />
-          <Text style={styles.actionText}>{formatCount(post.commentCount)}</Text>
+          <Text style={styles.actionText}>
+            {formatCount(post.commentCount)}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBtn} onPress={onShare}>
           <ExpoImage
@@ -508,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 12
+    paddingBottom: 12,
   },
   leftPlaceholder: { width: 80 },
   tabsContainer: {
@@ -516,11 +543,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    gap: 24
+    gap: 24,
   },
   tabButton: { alignItems: 'center', paddingVertical: 4 },
   tabInner: { alignItems: 'center', position: 'relative', paddingBottom: 10 },
-  tabText: { fontSize: 20, lineHeight: 28, fontWeight: '600', color: '#999' },
+  tabText: { fontSize: 18, lineHeight: 22, fontWeight: '600', color: '#999' },
   tabTextActive: { fontWeight: '700', color: '#111827' },
   tabIndicatorWrapper: {
     position: 'absolute',
@@ -530,14 +557,14 @@ const styles = StyleSheet.create({
     height: 10,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   tabIndicator: {
     width: 26,
     height: 10,
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
-    borderRadius: 999
+    borderRadius: 999,
   },
   tabIndicatorActive: { borderBottomColor: '#FF6B6B' },
   rightIcons: {
@@ -545,118 +572,131 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     width: 80,
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
   },
-  searchBarContainer: { paddingHorizontal: 16, overflow: 'hidden', marginBottom: 10 },
+  searchBarContainer: {
+    paddingHorizontal: 12,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fafafa',
     borderRadius: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    gap: 8
+    gap: 8,
   },
   searchPlaceholder: { flex: 1, fontSize: 14, color: '#bcbcbc' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { paddingHorizontal: 10, paddingBottom: 20 },
+  listContent: { paddingHorizontal: 8, paddingBottom: 20 },
   postCard: {
     paddingTop: 12,
-    marginBottom: 12,
-    overflow: 'hidden'
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    gap: 12
+    gap: 12,
   },
   authorWrap: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f0f0f0' },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f0f0f0',
+  },
   authorTextWrap: { marginLeft: 10, flex: 1 },
-  authorName: { fontSize: 15, fontWeight: '700', color: '#030303' },
-  authorMeta: { marginTop: 2, fontSize: 13, color: '#999999' },
+  authorName: { fontSize: 13, fontWeight: '700', color: '#030303' },
+  authorMeta: { marginTop: 2, fontSize: 12, color: '#999999' },
   followBtn: {
-    height: 35,
-    borderRadius: 6,
+    height: 30,
+    borderRadius: 4,
     backgroundColor: '#fb6650',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
-  followText: { color: '#fff', fontSize: 14 },
+  followText: { color: '#fff', fontSize: 12 },
   postContent: {
-    marginTop: 10,
-    paddingHorizontal: 12,
-    color: '#4f4f4f',
-    fontSize: 16,
-    lineHeight: 25
+    marginTop: 8,
+    paddingHorizontal: 2,
+    color: '#4d4d4d',
+    fontSize: 15,
+    lineHeight: 22,
   },
-  mediaWrap: { marginTop: 12, paddingHorizontal: 12 },
+  mediaWrap: { marginTop: 10 },
   singleImage: {
     width: '100%',
     height: CARD_WIDTH * 0.62,
-    borderRadius: 12,
-    backgroundColor: '#f0f0f0'
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
   },
   videoContainer: {
     borderRadius: 14,
     overflow: 'hidden',
-    position: 'relative'
+    position: 'relative',
   },
   videoCover: {
     width: '100%',
     height: CARD_WIDTH * 0.62,
-    backgroundColor: '#f0f0f0'
+    backgroundColor: '#f0f0f0',
   },
   videoOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)'
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   gridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: GRID_GAP
+    gap: GRID_GAP,
   },
   gridImage: {
     width: GRID_SIZE,
     height: GRID_SIZE,
-    borderRadius: 10,
-    backgroundColor: '#f0f0f0'
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
   },
   actionRow: {
+    marginTop: -2,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    gap: 16
+    gap: 15,
   },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, marginRight: 8 },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginRight: 8,
+  },
   actionIcon: {
-    width: 18,
-    height: 18,
-    tintColor: '#999999'
+    width: 15,
+    height: 15,
+    tintColor: '#a3a3a3',
   },
   actionIconActive: {
-    tintColor: '#fb6650'
+    tintColor: '#fb6650',
   },
-  actionText: { color: '#999999', fontSize: 16 },
+  actionText: { color: '#a3a3a3', fontSize: 14 },
   moreBtn: {
     marginLeft: 'auto',
     minHeight: 44,
     minWidth: 44,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 80,
-    width: SCREEN_WIDTH - CARD_HORIZONTAL * 2
+    width: SCREEN_WIDTH - CARD_HORIZONTAL * 2,
   },
   emptyText: { fontSize: 16, color: '#999', marginTop: 16 },
-  emptyHint: { fontSize: 13, color: '#ccc', marginTop: 8 }
+  emptyHint: { fontSize: 13, color: '#ccc', marginTop: 8 },
 })

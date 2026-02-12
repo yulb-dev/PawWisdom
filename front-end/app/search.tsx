@@ -93,7 +93,7 @@ export default function SearchScreen() {
             autoFocus
             returnKeyType="search"
           />
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={() => { }}>
             <Ionicons name="mic" size={23} color="#777777" />
           </TouchableOpacity>
         </View>
@@ -188,11 +188,11 @@ export default function SearchScreen() {
 
         {/* 热门问答 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>热门问答</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: 5 }]}>热门问答</Text>
           {POPULAR_QA.map((qa) => (
             <TouchableOpacity key={qa.id} style={styles.qaItem}>
               <View style={styles.qaContent}>
-                <Ionicons name="help-circle" size={16} color="#FF6B6B" />
+                <Ionicons name="help-circle" size={16} color="#FF6B6B" style={{ marginTop: 2 }} />
                 <View style={styles.qaTextContainer}>
                   <Text style={styles.qaQuestion}>{qa.question}</Text>
                   <Text style={styles.qaAnswers}>{qa.answers} 条回答</Text>
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   qaItem: {
     flexDirection: 'row',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   qaContent: {
     flex: 1,
@@ -325,9 +325,10 @@ const styles = StyleSheet.create({
   },
   qaQuestion: {
     fontSize: 15,
-    color: '#333',
+    color: '#505050',
+    fontWeight: '500',
     lineHeight: 22,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   qaAnswers: {
     fontSize: 13,
