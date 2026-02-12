@@ -1,11 +1,12 @@
 import {
+  Inject,
   Injectable,
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { SUPABASE_CLIENT } from '../../config/supabase.config';
 
 export interface UploadResult {
   url: string;
@@ -16,7 +17,6 @@ export interface UploadResult {
 
 @Injectable()
 export class UploadService {
-  private supabase: SupabaseClient;
   private readonly bucketName = 'pet-media';
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
   private readonly allowedMimeTypes = [
@@ -29,18 +29,9 @@ export class UploadService {
     'video/quicktime',
   ];
 
-  constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>(
-      'SUPABASE_SERVICE_ROLE_KEY',
-    );
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration is missing');
-    }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey) as SupabaseClient;
-  }
+  constructor(
+    @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
+  ) {}
 
   /**
    * 上传单个文件到Supabase Storage
