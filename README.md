@@ -56,7 +56,12 @@ PawWisdom/
 
 ## 🛠️ 快速开始
 
-更多专项文档请查看：[文档索引](./docs/README.md)。
+推荐先阅读以下文档（按上手顺序）：
+
+- [数据库初始化](./docs/DATABASE_SETUP.md)
+- [迭代 2 快速启动](./docs/ITERATION_2_QUICK_START.md)
+- [迭代 2 完成总结](./docs/ITERATION_2_SUMMARY.md)
+- [开发迭代规划](./docs/dev-iteration-plan.md)
 
 ### ✅ 前置检查
 
@@ -116,6 +121,11 @@ JWT_EXPIRES_IN=7d
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# AI（可选，不配置将自动降级为模拟数据）
+AI_PROVIDER=baidu
+BAIDU_AI_API_KEY=your-baidu-api-key
+BAIDU_AI_SECRET_KEY=your-baidu-secret-key
 ```
 
 #### 前端配置
@@ -171,10 +181,10 @@ pnpm start
 
 #### 测试完整流程
 
-1. 在前端应用中点击 "Register"
+1. 在前端应用中点击「注册」
 2. 填写注册信息（用户名、邮箱、密码）
-3. 注册成功后自动跳转到个人中心
-4. 点击 "Pets" Tab
+3. 注册成功后自动跳转到「个人中心」
+4. 点击「宠物」标签页
 5. 添加你的第一只宠物
 
 ### ❓ 常见问题
@@ -240,8 +250,8 @@ pnpm start:debug
 
 - [后端 API 文档](./back-end/README.md)
 - [数据库配置](./docs/DATABASE_SETUP.md)
-- [部署指南](./docs/DEPLOYMENT.md)
-- [更多文档](./docs/README.md)
+- [迭代 2 快速启动](./docs/ITERATION_2_QUICK_START.md)
+- [开发迭代规划](./docs/dev-iteration-plan.md)
 
 ## 🎯 迭代开发计划
 
@@ -253,13 +263,13 @@ pnpm start:debug
 - [x] 个人中心页面
 - [x] 基础页面框架
 
-### 🔄 迭代 2：AI 情绪识别与动态发布（进行中）
+### ✅ 迭代 2：AI 情绪识别与动态发布（已完成）
 
-- [ ] 集成第三方 AI 识别 API
-- [ ] 照片/视频上传处理
-- [ ] 生成宠物心情卡
-- [ ] 动态发布系统
-- [ ] 文件存储服务(OSS)
+- [x] 集成第三方 AI 识别 API
+- [x] 照片/视频上传处理
+- [x] 生成宠物心情卡
+- [x] 动态发布系统
+- [x] 文件存储服务（Supabase Storage）
 
 ### 📅 迭代 3：社区互动与信息流
 
@@ -307,6 +317,28 @@ pnpm start:debug
 - `GET /api/pets/:id` - 获取宠物详情
 - `PATCH /api/pets/:id` - 更新宠物信息
 - `DELETE /api/pets/:id` - 删除宠物档案
+
+#### 文件上传相关
+
+- `POST /api/upload/file` - 上传单个文件
+- `POST /api/upload/files` - 批量上传文件（最多 9 个）
+
+#### AI 情绪识别相关
+
+- `POST /api/ai/analyze-emotion` - 分析宠物情绪
+
+#### 动态相关
+
+- `POST /api/posts` - 创建动态
+- `GET /api/posts` - 获取动态列表（支持分页）
+- `GET /api/posts/:id` - 获取动态详情
+- `PATCH /api/posts/:id` - 更新动态
+- `DELETE /api/posts/:id` - 删除动态
+- `GET /api/posts/feed/recommended` - 获取推荐动态流
+- `GET /api/posts/feed/following` - 获取关注动态流
+- `POST /api/posts/:id/like` - 点赞动态
+- `DELETE /api/posts/:id/like` - 取消点赞
+- `POST /api/posts/:id/share` - 记录分享次数
 
 ## 🧪 测试
 
@@ -396,4 +428,4 @@ PawWisdom Development Team
 
 ---
 
-**开发状态**: 迭代 1 已完成 | **版本**: v0.1.0 | **更新时间**: 2026-02
+**开发状态**: 迭代 2 已完成，迭代 3 规划中 | **版本**: v0.2.0 | **更新时间**: 2026-02

@@ -10,6 +10,14 @@
 | 迭代4 | 健康自查与手账 | 2周 | 实现AI健康自查、健康手账基础功能 |
 | 迭代5 | 优化与扩展功能 | 2周 | 同城功能、通知提醒、性能优化 |
 
+### 当前进度快照（2026-02）
+
+- 迭代1：✅ 已完成
+- 迭代2：✅ 已完成（详见 `docs/ITERATION_2_SUMMARY.md`）
+- 迭代3：🔄 规划中
+- 迭代4：📅 待开始
+- 迭代5：📅 待开始
+
 ---
 
 ## 迭代1：基础框架与用户系统
@@ -142,6 +150,10 @@ Response: {pets[]}
 
 ## 迭代2：AI情绪识别与动态发布
 
+### 当前状态
+
+✅ 已完成（版本 `v0.2.0`）
+
 ### 目标
 
 集成第三方AI识别API，实现宠物照片AI解读，完成动态发布核心流程。
@@ -168,7 +180,7 @@ Response: {pets[]}
         
 3.  **文件存储服务**
     
-    *   图片上传到云存储（OSS）
+    *   图片上传到 Supabase Storage
         
     *   生成缩略图
         
@@ -226,11 +238,17 @@ Response: {
   mood_card_url: string
 }
 
-POST /api/upload/media
+POST /api/upload/file
+Headers: {Authorization: Bearer {token}}
+Content-Type: multipart/form-data
+Body: {file}
+Response: {url: string}
+
+POST /api/upload/files
 Headers: {Authorization: Bearer {token}}
 Content-Type: multipart/form-data
 Body: {files[]}
-Response: {urls: string[]}
+Response: {urls: string[]} // 最多 9 个
 ```
 
 #### 动态相关
@@ -622,8 +640,6 @@ CREATE TABLE app_statistics (
 
 #### 同城功能
 
-text
-
 ```plaintext
 GET /api/posts/nearby
 Query: {city, page, limit}
@@ -641,8 +657,6 @@ Response: {success: true}
 
 #### 通知系统
 
-text
-
 ```plaintext
 GET /api/notifications
 Headers: {Authorization: Bearer {token}}
@@ -659,8 +673,6 @@ Response: {success: true}
 ```
 
 #### 数据统计
-
-text
 
 ```plaintext
 GET /api/admin/statistics/daily
@@ -725,7 +737,7 @@ Response: {total_users, total_pets, total_posts, total_ai_usage}
     
 *   数据库：supabase
     
-*   文件存储：云对象存储（OSS）
+*   文件存储：Supabase Storage
     
 *   CI/CD：GitHub Actions / Jenkins
     
@@ -777,6 +789,6 @@ Response: {total_users, total_pets, total_posts, total_ai_usage}
 
 ---
 
-**文档版本：** V1.0  
+**文档版本：** V1.1  
 **最后更新：** 2026年2月  
 **说明：** 本规划基于PRD V1.0，实际开发中可根据进度和反馈灵活调整各迭代内容和优先级。
