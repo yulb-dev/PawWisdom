@@ -4,10 +4,8 @@ import Constants from 'expo-constants'
 import { Platform } from 'react-native'
 
 const getDevServerHost = () => {
-  const hostUri =
-    Constants.expoConfig?.hostUri ||
-    Constants.manifest2?.extra?.expoClient?.hostUri ||
-    Constants.manifest?.debuggerHost
+  // 优先使用 expoConfig.hostUri (SDK 50+)
+  const hostUri = Constants.expoConfig?.hostUri
   if (!hostUri) {
     return null
   }
@@ -29,7 +27,7 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || getDefaultApiBaseUrl()
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // 增加到 30 秒，适应文件上传等耗时操作
   headers: {
     'Content-Type': 'application/json'
   }

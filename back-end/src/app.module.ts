@@ -6,6 +6,11 @@ import { getDatabaseConfig } from './config/database.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { PetsModule } from './modules/pets/pets.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { AiModule } from './modules/ai/ai.module';
+import { PostsModule } from './modules/posts/posts.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { FollowsModule } from './modules/follows/follows.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -23,6 +28,11 @@ import { AppService } from './app.service';
     AuthModule,
     UsersModule,
     PetsModule,
+    UploadModule,
+    AiModule,
+    PostsModule,
+    CommentsModule,
+    FollowsModule,
   ],
   controllers: [AppController],
   providers: [

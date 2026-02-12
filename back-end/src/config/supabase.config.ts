@@ -1,6 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
 
+export const SUPABASE_CLIENT = 'SUPABASE_CLIENT';
+
 export const getSupabaseClient = (
   configService: ConfigService,
 ): ReturnType<typeof createClient> => {

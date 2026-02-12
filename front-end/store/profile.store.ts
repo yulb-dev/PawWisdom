@@ -14,8 +14,8 @@ const defaultProfile = {
   gender: 'secret' as ProfileGender,
   avatarUri: null,
   backgroundUri: null,
-  followers: 9868,
-  following: 786
+  followers: 0,
+  following: 0
 }
 
 interface ProfileState {

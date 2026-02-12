@@ -56,22 +56,32 @@ PawWisdom/
 
 ## 🛠️ 快速开始
 
-### 前置要求
+推荐先阅读以下文档（按上手顺序）：
 
-- Node.js 18+
-- pnpm 8+
+- [数据库初始化](./docs/DATABASE_SETUP.md)
+- [迭代 2 快速启动](./docs/ITERATION_2_QUICK_START.md)
+- [迭代 2 完成总结](./docs/ITERATION_2_SUMMARY.md)
+- [开发迭代规划](./docs/dev-iteration-plan.md)
+
+### ✅ 前置检查
+
+- Node.js 18+（`node --version`）
+- pnpm 8+（`pnpm --version`）
+- Expo CLI（`npx expo --version`）
+- Git（`git --version`）
 - Supabase 账号
 
 ### 1. 克隆项目
 
 ```bash
-git clone <repository-url>
+git clone <your-repo-url>
 cd PawWisdom
 ```
 
 ### 2. 安装依赖
 
 ```bash
+# 安装所有依赖
 pnpm install
 ```
 
@@ -111,6 +121,11 @@ JWT_EXPIRES_IN=7d
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# AI（可选，不配置将自动降级为模拟数据）
+AI_PROVIDER=baidu
+BAIDU_AI_API_KEY=your-baidu-api-key
+BAIDU_AI_SECRET_KEY=your-baidu-secret-key
 ```
 
 #### 前端配置
@@ -158,6 +173,86 @@ pnpm start
 - `a` - Android 模拟器
 - `w` - Web 浏览器
 
+### 6. 验证启动结果
+
+#### 测试后端 API
+
+访问 `http://localhost:3000/api`，你应该能看到响应。
+
+#### 测试完整流程
+
+1. 在前端应用中点击「注册」
+2. 填写注册信息（用户名、邮箱、密码）
+3. 注册成功后自动跳转到「个人中心」
+4. 点击「宠物」标签页
+5. 添加你的第一只宠物
+
+### ❓ 常见问题
+
+#### 后端无法启动
+
+```bash
+# 检查端口是否被占用
+lsof -i :3000
+
+# 如果被占用，杀死进程或更改端口
+kill -9 $(lsof -ti:3000)
+```
+
+#### 前端无法连接后端
+
+1. 确认后端已启动
+2. 检查 `front-end/.env` 中的 API_URL
+3. 如果使用真机测试，将 `localhost` 改为你的局域网 IP：
+   ```env
+   EXPO_PUBLIC_API_URL=http://192.168.1.x:3000/api
+   ```
+
+#### 数据库连接失败
+
+1. 检查 Supabase 项目是否在运行
+2. 验证 `.env` 中的数据库配置
+3. 确认密码正确（没有多余空格）
+
+#### Expo Go 无法扫描二维码
+
+1. 确保手机和电脑在同一网络
+2. 尝试使用 Tunnel 模式：`pnpm start --tunnel`
+3. 或使用模拟器代替真机测试
+
+### 💡 开发技巧
+
+#### 热重载
+
+- 后端修改会自动重启
+- 前端修改会自动刷新
+
+#### 调试
+
+```bash
+# 后端调试
+cd back-end
+pnpm start:debug
+
+# 然后在 VS Code 中附加调试器
+```
+
+#### 查看日志
+
+```bash
+# 后端日志在终端中直接显示
+# 前端日志在 Expo Dev Tools 中查看
+```
+
+### 📚 下一步
+
+推荐阅读：
+
+- [后端 API 文档](./back-end/README.md)
+- [数据库配置](./docs/DATABASE_SETUP.md)
+- [迭代 2 快速启动](./docs/ITERATION_2_QUICK_START.md)
+- [开发迭代规划](./docs/dev-iteration-plan.md)
+
 ## 🎯 迭代开发计划
 
 ### ✅ 迭代 1：基础框架与用户系统（已完成）
@@ -168,13 +263,13 @@ pnpm start
 - [x] 个人中心页面
 - [x] 基础页面框架
 
-### 🔄 迭代 2：AI 情绪识别与动态发布（进行中）
+### ✅ 迭代 2：AI 情绪识别与动态发布（已完成）
 
-- [ ] 集成第三方 AI 识别 API
-- [ ] 照片/视频上传处理
-- [ ] 生成宠物心情卡
-- [ ] 动态发布系统
-- [ ] 文件存储服务(OSS)
+- [x] 集成第三方 AI 识别 API
+- [x] 照片/视频上传处理
+- [x] 生成宠物心情卡
+- [x] 动态发布系统
+- [x] 文件存储服务（Supabase Storage）
 
 ### 📅 迭代 3：社区互动与信息流
 
@@ -222,6 +317,28 @@ pnpm start
 - `GET /api/pets/:id` - 获取宠物详情
 - `PATCH /api/pets/:id` - 更新宠物信息
 - `DELETE /api/pets/:id` - 删除宠物档案
+
+#### 文件上传相关
+
+- `POST /api/upload/file` - 上传单个文件
+- `POST /api/upload/files` - 批量上传文件（最多 9 个）
+
+#### AI 情绪识别相关
+
+- `POST /api/ai/analyze-emotion` - 分析宠物情绪
+
+#### 动态相关
+
+- `POST /api/posts` - 创建动态
+- `GET /api/posts` - 获取动态列表（支持分页）
+- `GET /api/posts/:id` - 获取动态详情
+- `PATCH /api/posts/:id` - 更新动态
+- `DELETE /api/posts/:id` - 删除动态
+- `GET /api/posts/feed/recommended` - 获取推荐动态流
+- `GET /api/posts/feed/following` - 获取关注动态流
+- `POST /api/posts/:id/like` - 点赞动态
+- `DELETE /api/posts/:id/like` - 取消点赞
+- `POST /api/posts/:id/share` - 记录分享次数
 
 ## 🧪 测试
 
@@ -311,4 +428,4 @@ PawWisdom Development Team
 
 ---
 
-**开发状态**: 迭代 1 已完成 | **版本**: v0.1.0 | **更新时间**: 2026-02
+**开发状态**: 迭代 2 已完成，迭代 3 规划中 | **版本**: v0.2.0 | **更新时间**: 2026-02
