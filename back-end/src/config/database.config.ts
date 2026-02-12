@@ -6,11 +6,6 @@ export const getDatabaseConfig = (
 ): TypeOrmModuleOptions => ({
   type: 'postgres',
   url: configService.get<string>('DATABASE_URL'),
-  // host: configService.get<string>('SUPABASE_DB_HOST'),
-  // port: configService.get<number>('SUPABASE_DB_PORT', 5432),
-  // username: configService.get<string>('SUPABASE_DB_USER'),
-  // password: configService.get<string>('SUPABASE_DB_PASSWORD'),
-  // database: configService.get<string>('SUPABASE_DB_NAME'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   // 关闭自动同步，使用手动迁移脚本管理数据库表结构
   synchronize: true,
