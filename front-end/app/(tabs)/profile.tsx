@@ -18,6 +18,7 @@ import { useDialog } from '../../components/ui/DialogProvider'
 import { useAuthStore } from '../../store/auth.store'
 import { useProfileStore } from '../../store/profile.store'
 import { petService, Pet } from '../../services/pet.service'
+import { followService } from '../../services/follow.service'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const DESIGN_WIDTH = 375
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
       return
     }
     loadPets()
+    loadFollowStats()
   }, [isAuthenticated])
 
   // 监听页面焦点，每次进入页面时刷新宠物列表
@@ -48,6 +50,7 @@ export default function ProfileScreen() {
     useCallback(() => {
       if (hasMounted.current && isAuthenticated) {
         loadPets()
+        loadFollowStats()
       } else {
         hasMounted.current = true
       }
@@ -60,6 +63,18 @@ export default function ProfileScreen() {
       setPets(data)
     } catch (error) {
       showDialog({ title: '错误', message: '加载宠物档案失败' })
+    }
+  }
+
+  const loadFollowStats = async () => {
+    try {
+      const { followerCount, followingCount } = await followService.getMyFollowStats()
+      profile.updateProfile({
+        followers: followerCount,
+        following: followingCount
+      })
+    } catch {
+      // 关注统计加载失败不影响主流程，这里静默处理
     }
   }
 

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Query,
   Request,
   UseGuards,
   HttpCode,
@@ -11,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { FollowsService } from './follows.service';
+import { FollowsService, PaginatedFollowUsersResult } from './follows.service';
+import { QueryFollowsDto } from './dto/query-follows.dto';
 
 type AuthRequest = ExpressRequest & { user: { userId: string } };
 
@@ -58,5 +60,29 @@ export class FollowsController {
     followingCount: number;
   }> {
     return this.followsService.getFollowStats(req.user.userId);
+  }
+
+  @Get('me/followers')
+  async getMyFollowers(
+    @Query() query: QueryFollowsDto,
+    @Request() req: AuthRequest,
+  ): Promise<PaginatedFollowUsersResult> {
+    return this.followsService.getFollowers(
+      req.user.userId,
+      query.page,
+      query.limit,
+    );
+  }
+
+  @Get('me/following')
+  async getMyFollowing(
+    @Query() query: QueryFollowsDto,
+    @Request() req: AuthRequest,
+  ): Promise<PaginatedFollowUsersResult> {
+    return this.followsService.getFollowing(
+      req.user.userId,
+      query.page,
+      query.limit,
+    );
   }
 }

@@ -14,9 +14,16 @@
 
 - 迭代1：✅ 已完成
 - 迭代2：✅ 已完成（详见 `docs/ITERATION_2_SUMMARY.md`）
-- 迭代3：🔄 规划中
+- 迭代3：✅ 已完成（详见 `docs/ITERATION_3_SUMMARY.md`）
 - 迭代4：📅 待开始
 - 迭代5：📅 待开始
+
+### 数据库脚本执行顺序（开发环境）
+
+1. `back-end/database/init.sql`
+2. `back-end/database/iteration2-posts.sql`
+3. `back-end/database/iteration3-social-features.sql`
+4. `back-end/database/iteration3-social-interactions.sql`
 
 ---
 
@@ -286,6 +293,10 @@ Response: {post, user, pet, hashtags[]}
 
 ## 迭代3：社区互动与信息流
 
+### 当前状态
+
+✅ 已完成（版本 `v0.3.0`）
+
 ### 目标
 
 实现社区核心互动功能，构建首页信息流。
@@ -319,7 +330,7 @@ Response: {post, user, pet, hashtags[]}
 
 ```postgresql
 -- 点赞表
-CREATE TABLE likes (
+CREATE TABLE post_likes (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
   post_id INT,
@@ -343,7 +354,7 @@ CREATE TABLE comments (
 );
 
 -- 关注表
-CREATE TABLE follows (
+CREATE TABLE user_follows (
   id INT PRIMARY KEY AUTO_INCREMENT,
   follower_id INT,
   following_id INT,
@@ -380,22 +391,32 @@ DELETE /api/posts/:postId/like
 Headers: {Authorization: Bearer {token}}
 Response: {success: true, like_count}
 
-POST /api/posts/:postId/comments
+POST /api/comments
 Headers: {Authorization: Bearer {token}}
-Body: {content, parent_id}
+Body: {postId, content, parentId}
 Response: {comment}
 
-GET /api/posts/:postId/comments
+GET /api/comments
 Query: {page, limit}
 Response: {comments[], pagination}
 
-POST /api/users/:userId/follow
+POST /api/follows/:userId
 Headers: {Authorization: Bearer {token}}
 Response: {success: true}
 
-DELETE /api/users/:userId/follow
+DELETE /api/follows/:userId
 Headers: {Authorization: Bearer {token}}
 Response: {success: true}
+
+GET /api/follows/me/followers
+Headers: {Authorization: Bearer {token}}
+Query: {page, limit}
+Response: {users[], pagination}
+
+GET /api/follows/me/following
+Headers: {Authorization: Bearer {token}}
+Query: {page, limit}
+Response: {users[], pagination}
 ```
 
 ### 测试用例
