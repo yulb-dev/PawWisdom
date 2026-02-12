@@ -56,22 +56,27 @@ PawWisdom/
 
 ## 🛠️ 快速开始
 
-### 前置要求
+更多专项文档请查看：[文档索引](./docs/README.md)。
 
-- Node.js 18+
-- pnpm 8+
+### ✅ 前置检查
+
+- Node.js 18+（`node --version`）
+- pnpm 8+（`pnpm --version`）
+- Expo CLI（`npx expo --version`）
+- Git（`git --version`）
 - Supabase 账号
 
 ### 1. 克隆项目
 
 ```bash
-git clone <repository-url>
+git clone <your-repo-url>
 cd PawWisdom
 ```
 
 ### 2. 安装依赖
 
 ```bash
+# 安装所有依赖
 pnpm install
 ```
 
@@ -157,6 +162,86 @@ pnpm start
 - `i` - iOS 模拟器
 - `a` - Android 模拟器
 - `w` - Web 浏览器
+
+### 6. 验证启动结果
+
+#### 测试后端 API
+
+访问 `http://localhost:3000/api`，你应该能看到响应。
+
+#### 测试完整流程
+
+1. 在前端应用中点击 "Register"
+2. 填写注册信息（用户名、邮箱、密码）
+3. 注册成功后自动跳转到个人中心
+4. 点击 "Pets" Tab
+5. 添加你的第一只宠物
+
+### ❓ 常见问题
+
+#### 后端无法启动
+
+```bash
+# 检查端口是否被占用
+lsof -i :3000
+
+# 如果被占用，杀死进程或更改端口
+kill -9 $(lsof -ti:3000)
+```
+
+#### 前端无法连接后端
+
+1. 确认后端已启动
+2. 检查 `front-end/.env` 中的 API_URL
+3. 如果使用真机测试，将 `localhost` 改为你的局域网 IP：
+   ```env
+   EXPO_PUBLIC_API_URL=http://192.168.1.x:3000/api
+   ```
+
+#### 数据库连接失败
+
+1. 检查 Supabase 项目是否在运行
+2. 验证 `.env` 中的数据库配置
+3. 确认密码正确（没有多余空格）
+
+#### Expo Go 无法扫描二维码
+
+1. 确保手机和电脑在同一网络
+2. 尝试使用 Tunnel 模式：`pnpm start --tunnel`
+3. 或使用模拟器代替真机测试
+
+### 💡 开发技巧
+
+#### 热重载
+
+- 后端修改会自动重启
+- 前端修改会自动刷新
+
+#### 调试
+
+```bash
+# 后端调试
+cd back-end
+pnpm start:debug
+
+# 然后在 VS Code 中附加调试器
+```
+
+#### 查看日志
+
+```bash
+# 后端日志在终端中直接显示
+# 前端日志在 Expo Dev Tools 中查看
+```
+
+### 📚 下一步
+
+推荐阅读：
+
+- [后端 API 文档](./back-end/README.md)
+- [数据库配置](./docs/DATABASE_SETUP.md)
+- [部署指南](./docs/DEPLOYMENT.md)
+- [更多文档](./docs/README.md)
 
 ## 🎯 迭代开发计划
 
