@@ -14,7 +14,7 @@
 
 - 迭代1：✅ 已完成
 - 迭代2：✅ 已完成（详见 `docs/ITERATION_2_SUMMARY.md`）
-- 迭代3：✅ 已完成（详见 `docs/ITERATION_3_SUMMARY.md`）
+- 迭代3：🔄 进行中
 - 迭代4：📅 待开始
 - 迭代5：📅 待开始
 
@@ -295,7 +295,7 @@ Response: {post, user, pet, hashtags[]}
 
 ### 当前状态
 
-✅ 已完成（版本 `v0.3.0`）
+🔄 开发中（当前分支：`feature/iteration-3-community-feed`）
 
 ### 目标
 
