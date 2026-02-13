@@ -403,7 +403,7 @@ docs(readme): 更新安装指南
 ### 代码规范
 
 - 后端遵循 [NestJS 最佳实践](./.cursor/rules/backend-nestjs.mdc)
-- 前端遵循 [React Native 最佳实践](./.cursor/rules/frontend-react-native.mdc)
+- 前端遵循 [React Native 最佳实践](./.cursor/skills/vercel-react-native-skills/SKILL.md)
 - 数据库遵循 [Supabase + TypeORM 规范](./.cursor/rules/database-supabase-typeorm.mdc)
 
 ## 🤝 贡献指南
