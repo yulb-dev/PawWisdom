@@ -123,7 +123,7 @@ export default function ProfileScreen() {
           <Image source={avatarSource} style={styles.avatar} contentFit="cover" />
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>{displayName}</Text>
-            <Text style={styles.userSubtitle}>金毛寻回犬 · Mobile</Text>
+            <Text style={styles.userSubtitle}>金毛寻回犬 · 宠物达人</Text>
           </View>
           <Ionicons name="qr-code-outline" size={24} color="#111" />
         </TouchableOpacity>
@@ -132,17 +132,17 @@ export default function ProfileScreen() {
         <View style={styles.statsCard}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>98626</Text>
-            <Text style={styles.statLabel}>Praise</Text>
+            <Text style={styles.statLabel}>获赞</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>686</Text>
-            <Text style={styles.statLabel}>Dynamic</Text>
+            <Text style={styles.statLabel}>动态</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>6869</Text>
-            <Text style={styles.statLabel}>Share</Text>
+            <Text style={styles.statLabel}>分享</Text>
           </View>
         </View>
 
@@ -154,7 +154,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuItemLeft}>
               <Ionicons name="people-outline" size={24} color="#111" />
-              <Text style={styles.menuItemText}>Followers</Text>
+              <Text style={styles.menuItemText}>粉丝</Text>
             </View>
             <View style={styles.menuItemRight}>
               <Text style={styles.menuItemCount}>{profile.followers}</Text>
@@ -168,7 +168,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuItemLeft}>
               <Ionicons name="person-add-outline" size={24} color="#111" />
-              <Text style={styles.menuItemText}>Following</Text>
+              <Text style={styles.menuItemText}>关注</Text>
             </View>
             <View style={styles.menuItemRight}>
               <Text style={styles.menuItemCount}>{profile.following}</Text>
@@ -182,7 +182,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuItemLeft}>
               <Ionicons name="star-outline" size={24} color="#111" />
-              <Text style={styles.menuItemText}>Collections</Text>
+              <Text style={styles.menuItemText}>收藏</Text>
             </View>
             <View style={styles.menuItemRight}>
               <Text style={styles.menuItemCount}>264</Text>
@@ -193,7 +193,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/my-posts')}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="bag-handle-outline" size={24} color="#111" />
-              <Text style={styles.menuItemText}>Order</Text>
+              <Text style={styles.menuItemText}>我的动态</Text>
             </View>
             <View style={styles.menuItemRight}>
               <Text style={styles.menuItemCount}>18</Text>
@@ -207,7 +207,7 @@ export default function ProfileScreen() {
           <View style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="moon-outline" size={24} color="#111" />
-              <Text style={styles.menuItemText}>Dark Mode</Text>
+              <Text style={styles.menuItemText}>深色模式</Text>
             </View>
           </View>
         </View>
