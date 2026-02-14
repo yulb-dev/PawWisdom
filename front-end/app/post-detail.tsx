@@ -22,6 +22,7 @@ import { postService } from '../services/post.service';
 import { commentService } from '../services/comment.service';
 import { followService } from '../services/follow.service';
 import { useAuthStore } from '../store/auth.store';
+import VideoPlayer from '../components/video/VideoPlayer';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_WIDTH;
@@ -39,6 +40,7 @@ export default function PostDetailScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [commentText, setCommentText] = useState('');
   const [commentLikeStatusMap, setCommentLikeStatusMap] = useState<Record<string, boolean>>({});
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
 
   // 获取动态详情
   const { data: post, isLoading } = useQuery({
@@ -99,6 +101,23 @@ export default function PostDetailScreen() {
         await postService.unlikePost(postId);
       } else {
         await postService.likePost(postId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['post-interactions', postId] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+
+  // 收藏/取消收藏
+  const favoriteMutation = useMutation({
+    mutationFn: async () => {
+      const isFavorited = interactionStatus?.isFavorited || false;
+      if (isFavorited) {
+        await postService.unfavoritePost(postId);
+      } else {
+        await postService.favoritePost(postId);
       }
     },
     onSuccess: () => {
@@ -328,16 +347,20 @@ export default function PostDetailScreen() {
             </View>
           )}
           {isVideo && (mediaUrls[0] || post.coverImageUrl) && (
-            <View style={styles.imageContainer}>
+            <TouchableOpacity
+              style={styles.imageContainer}
+              activeOpacity={0.9}
+              onPress={() => setShowVideoPlayer(true)}
+            >
               <RNImage
                 source={{ uri: post.coverImageUrl || mediaUrls[0] }}
                 style={styles.postImage}
                 resizeMode="cover"
               />
               <View style={styles.videoOverlay}>
-                <Ionicons name="play" size={40} color="#fff" />
+                <Ionicons name="play-circle" size={64} color="#fff" />
               </View>
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* 内容区域 */}
@@ -352,13 +375,39 @@ export default function PostDetailScreen() {
             <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
 
             <View style={styles.postActions}>
-              <TouchableOpacity style={styles.postActionBtn} onPress={() => likeMutation.mutate()}>
+              <TouchableOpacity
+                style={styles.postActionBtn}
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    router.push('/auth/login');
+                    return;
+                  }
+                  likeMutation.mutate();
+                }}
+              >
                 <Ionicons
                   name={interactionStatus?.isLiked ? 'thumbs-up' : 'thumbs-up-outline'}
                   size={21}
                   color={interactionStatus?.isLiked ? '#FF6B6B' : '#999'}
                 />
                 <Text style={styles.postActionText}>{post.likeCount}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.postActionBtn}
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    router.push('/auth/login');
+                    return;
+                  }
+                  favoriteMutation.mutate();
+                }}
+              >
+                <Ionicons
+                  name={interactionStatus?.isFavorited ? 'star' : 'star-outline'}
+                  size={21}
+                  color={interactionStatus?.isFavorited ? '#FCD34D' : '#999'}
+                />
+                <Text style={styles.postActionText}>{post.favoriteCount}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.postActionBtn} onPress={handleShare}>
                 <Ionicons name="share-social-outline" size={21} color="#999" />
@@ -434,6 +483,15 @@ export default function PostDetailScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* 视频播放器 */}
+      {isVideo && mediaUrls.length > 0 && (
+        <VideoPlayer
+          videoUri={mediaUrls[0]}
+          visible={showVideoPlayer}
+          onClose={() => setShowVideoPlayer(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }

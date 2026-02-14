@@ -33,6 +33,7 @@ export default function CreatePostScreen() {
   const [hashtagInput, setHashtagInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [videoCoverUri, setVideoCoverUri] = useState<string | undefined>();
 
   const { data: myPets = [] } = useQuery({
     queryKey: ['my-pets-for-post'],
@@ -63,6 +64,14 @@ export default function CreatePostScreen() {
   // 处理图片选择
   const handleImagesSelected = (images: SelectedImage[]) => {
     setSelectedImages(images);
+    // 如果是视频并且有封面,保存封面URI
+    const video = images.find(img => img.type === 'video');
+    setVideoCoverUri(video?.coverUri);
+  };
+
+  // 处理视频封面选择
+  const handleVideoCoverSelect = (videoUri: string, coverUri: string) => {
+    setVideoCoverUri(coverUri);
   };
 
   // 添加话题标签
@@ -122,8 +131,9 @@ export default function CreatePostScreen() {
 
     try {
       let uploadedUrls: string[] = [];
+      let uploadedCoverUrl: string | undefined;
 
-      // 上传新图片（排除已上传的）
+      // 上传新图片/视频（排除已上传的）
       const imagesToUpload = selectedImages.filter(
         (img) => !img.uri.startsWith('http'),
       );
@@ -139,6 +149,23 @@ export default function CreatePostScreen() {
           'posts',
         );
         uploadedUrls = uploadResults.files.map((file) => file.url);
+      }
+
+      // 如果有视频封面,上传封面
+      if (videoCoverUri && !videoCoverUri.startsWith('http')) {
+        const coverResult = await uploadService.uploadFiles(
+          [
+            {
+              uri: videoCoverUri,
+              name: 'cover.jpg',
+              type: 'image/jpeg',
+            },
+          ],
+          'posts',
+        );
+        uploadedCoverUrl = coverResult.files[0]?.url;
+      } else if (videoCoverUri) {
+        uploadedCoverUrl = videoCoverUri;
       }
 
       // 添加已上传的图片URL
@@ -167,6 +194,7 @@ export default function CreatePostScreen() {
               : 'image'
             : undefined,
         mediaUrls: allUrls.length > 0 ? allUrls : undefined,
+        coverImageUrl: uploadedCoverUrl, // 添加视频封面
         hashtags: allHashtags.length > 0 ? allHashtags : undefined,
         aiAnalysis:
           emotion && confidence
@@ -248,6 +276,7 @@ export default function CreatePostScreen() {
             maxImages={6}
             onImagesSelected={handleImagesSelected}
             initialImages={selectedImages}
+            onVideoCoverSelect={handleVideoCoverSelect}
           />
           <Text style={styles.mediaTip}>支持最多6张图片或1个视频，不支持混选</Text>
         </View>
