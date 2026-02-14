@@ -41,6 +41,8 @@ export default function PostDetailScreen() {
   const [commentText, setCommentText] = useState('');
   const [commentLikeStatusMap, setCommentLikeStatusMap] = useState<Record<string, boolean>>({});
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [videoResumePositionMs, setVideoResumePositionMs] = useState(0);
+  const [videoPlayerSession, setVideoPlayerSession] = useState(0);
 
   // 获取动态详情
   const { data: post, isLoading } = useQuery({
@@ -219,6 +221,11 @@ export default function PostDetailScreen() {
     }
   };
 
+  const handleOpenVideoPlayer = () => {
+    setVideoPlayerSession((prev) => prev + 1);
+    setShowVideoPlayer(true);
+  };
+
   // 格式化日期
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -350,7 +357,7 @@ export default function PostDetailScreen() {
             <TouchableOpacity
               style={styles.imageContainer}
               activeOpacity={0.9}
-              onPress={() => setShowVideoPlayer(true)}
+              onPress={handleOpenVideoPlayer}
             >
               <RNImage
                 source={{ uri: post.coverImageUrl || mediaUrls[0] }}
@@ -487,9 +494,14 @@ export default function PostDetailScreen() {
       {/* 视频播放器 */}
       {isVideo && mediaUrls.length > 0 && (
         <VideoPlayer
+          key={`video-player-${videoPlayerSession}`}
           videoUri={mediaUrls[0]}
+          initialPositionMs={videoResumePositionMs}
           visible={showVideoPlayer}
-          onClose={() => setShowVideoPlayer(false)}
+          onClose={(positionMs) => {
+            setVideoResumePositionMs(positionMs);
+            setShowVideoPlayer(false);
+          }}
         />
       )}
     </SafeAreaView>
