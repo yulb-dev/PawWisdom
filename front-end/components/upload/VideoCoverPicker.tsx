@@ -184,9 +184,7 @@ export default function VideoCoverPicker({
           time: Math.max(0, Math.min(activeDuration, position)),
           quality: 0.9
         })
-        console.log('time', Math.max(0, Math.min(activeDuration, position)))
         if (requestId === frameRequestIdRef.current) {
-          console.log('uri', uri)
           setSelectorPreviewUri(uri)
         }
       } catch (error) {
